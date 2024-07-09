@@ -1,0 +1,53 @@
+{
+    "name": "techblog",
+    "dockerComposeFile": "../docker-compose.devcontainer.yaml",
+    "service": "techblog-workspace",
+    "workspaceFolder": "/home/node/workspaces",
+    "shutdownAction": "stopCompose",
+    "portsAttributes": {
+    "4321": {
+      "label": "Application",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "forwardPorts": [4321],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "biomejs.biome",
+                "ms-azuretools.vscode-docker",
+                "bradlc.vscode-tailwindcss",
+                "astro-build.astro-vscode"
+            ],
+            "settings": {
+                "files.associations": {
+                    "*.css": "tailwindcss"
+                },
+                "editor.quickSuggestions": {
+                    "strings": "on"
+                },
+                "[javascript]": {
+                    "editor.defaultFormatter": "biomejs.biome"
+                },
+                "[javascriptreact]": {
+                    "editor.defaultFormatter": "biomejs.biome"
+                },
+                "[typescript]": {
+                    "editor.defaultFormatter": "biomejs.biome"
+                },
+                "[typescriptreact]": {
+                    "editor.defaultFormatter": "biomejs.biome"
+                },
+                "[json]": {
+                    "editor.defaultFormatter": "biomejs.biome"
+                },
+                "biome.lspBin": "/usr/local/share/pnpm/biome",
+                "editor.codeActionsOnSave": {
+                    "quickfix.biome": "explicit",
+                    "source.organizeImports.biome": "explicit"
+                }
+            }
+        }
+    },
+    "remoteUser": "node"
+}

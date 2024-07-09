@@ -1,0 +1,33 @@
+---
+import CenterLayout from "../../layouts/CenterLayout.astro";
+import { blogRepository} from '../../scripts/repository/provider';
+import type { Blog, Tag } from "../../scripts/repository/types"
+
+export async function getStaticPaths() {
+   const response = await blogRepository.getTags();
+   return response.contents.map((content: Tag) => ({
+    params: {
+        tag: content.name
+    },
+    props: {
+        tagId: content.id
+    }
+   })) 
+}
+
+const { tag } = Astro.params;
+const { tagId } = Astro.props;
+const response = await blogRepository.getTagFilteredBlogs(tagId)
+
+const title = tag; 
+---
+<CenterLayout title={title}>
+    <ul>
+    {
+        response.contents.map((content: Blog) => (
+        <li>
+            <a href={`/${content.id}`}>{content.title}</a>
+        </li>
+        ))
+    }
+</CenterLayout>

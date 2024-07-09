@@ -1,0 +1,20 @@
+---
+import CenterLayout from "../../layouts/CenterLayout.astro";
+import { blogRepository} from '../../scripts/repository/provider';
+import type { Tag } from "../../scripts/repository/types"
+
+const response = await blogRepository.getTags();
+
+const title = "タグ一覧";
+---
+<CenterLayout title={title}>
+	<ul>
+		{
+			response.contents.map((content: Tag) => (
+			<li>
+				<a href={`/tags/${content.name}`}>{content.name}</a>
+			</li>
+			))
+		}
+	</ul>
+</CenterLayout>

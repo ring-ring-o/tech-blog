@@ -1,0 +1,14 @@
+name: devcontainer
+version: '3.8'
+
+services:
+  techblog-workspace:
+    build:
+      context: .
+      dockerfile: "./.devcontainer/dockerfile"
+    hostname: workspace
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/node/workspaces/
+    command: [ "tail", "-f", "/dev/null" ]
