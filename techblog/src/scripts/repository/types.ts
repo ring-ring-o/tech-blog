@@ -10,7 +10,7 @@ export type Blog = {
   title: string;
   content: string;
   eyecatch: string;
-  tags?: string[];
+  tags?: Tag[];
 };
 
 /**

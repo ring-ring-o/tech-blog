@@ -1,0 +1,26 @@
+---
+import type { GetStaticPathsOptions } from 'astro';
+import CenterLayout from '../layouts/CenterLayout.astro';
+import { blogRepository } from '../scripts/repository/provider';
+import type { Blog } from '../scripts/repository/types';
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+    const results = await blogRepository.getBlogMetaDatas();
+    return paginate(results, { pageSize: 20 });
+}  
+
+const { page } = Astro.props;
+const title = '記事一覧'
+---
+
+<CenterLayout title={title}>
+	<ul>
+	{
+		page.data.map((content: Blog) => (
+		<li>
+			<a href={`/articles/${content.id}`}>{content.title}</a>
+		</li>
+		))
+	}
+	</ul>
+</CenterLayout >

@@ -5,11 +5,22 @@ import type { Blog, BlogResponse, TagResponse } from "./types";
  */
 export interface BlogRepository {
   /**
-   * ブログ一覧を取得する関数
+   * ブログのメタ情報一覧を取得する関数
    * @param queries
    */
-  getBlogs(offset?: number, limit?: number): Promise<BlogResponse>;
+  getBlogMetaDatas(offset?: number, limit?: number): Promise<Blog[]>;
 
+  /**
+   * 全てのブログ記事を取得する関数
+   */
+  getAllBlogs(): Promise<Blog[]>;
+
+  /**
+   * タグを含むブログのメタ情報一覧を取得する関数
+   * @param tagId
+   * @param offset
+   * @param limit
+   */
   getTagFilteredBlogs(
     tagId: string,
     offset?: number,

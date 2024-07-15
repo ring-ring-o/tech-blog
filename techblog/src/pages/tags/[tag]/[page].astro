@@ -1,0 +1,41 @@
+---
+import type { GetStaticPaths, GetStaticPathsOptions, InferGetStaticPropsType, Page } from "astro";
+import CenterLayout from "../../../layouts/CenterLayout.astro";
+import { blogRepository} from '../../../scripts/repository/provider';
+import type { Blog, Tag } from "../../../scripts/repository/types"
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+   const tags = await blogRepository.getTags();
+   const metaDatas = await blogRepository.getBlogMetaDatas();
+
+   return tags.contents.flatMap((tagInfo: Tag) => {
+    const datas = metaDatas.filter((data: Blog) => data.tags?.some((tag: Tag) => tag.id === tagInfo.id));
+    return paginate(datas, {
+       params: { tag: tagInfo.name},
+       pageSize: 20 
+    });
+   });
+//    return response.contents.map((content: Tag) => ({
+//     params: {
+//         tag: content.name
+//     },
+//     props: {
+//         tagId: content.id
+//     }
+//    })) 
+}
+
+const { tag } = Astro.params;
+const { page } = Astro.props; 
+const title = tag; 
+---
+<CenterLayout title={title}>
+    <ul>
+    {
+        page.data.map((content: Blog) => (
+        <li>
+            <a href={`/articles/${content.id}`}>{content.title}</a>
+        </li>
+        ))
+    }
+</CenterLayout>

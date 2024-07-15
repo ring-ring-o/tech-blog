@@ -1,0 +1,27 @@
+---
+import BlogLayout from "../../layouts/BlogLayout.astro";
+import { blogRepository} from '../../scripts/repository/provider';
+import type { Blog } from "../../scripts/repository/types"
+
+
+export async function getStaticPaths() {
+   const response = await blogRepository.getAllBlogs();
+   return response.map((content: Blog) => ({
+    params: {
+        blogId: content.id
+    },
+    props: {
+        blog: response.find((data) => content.id === data.id) as Blog
+    },
+   })) 
+}
+
+const { blog } = await Astro.props;
+
+const title = blog.title
+---
+<BlogLayout title={title}>
+	<h1 class="title">{blog.title}</h1>
+	<p class="publishedAt">公開日時：{blog.publishedAt}</p>
+	<div class="post" set:html={blog.content}></div>
+</BlogLayout>
