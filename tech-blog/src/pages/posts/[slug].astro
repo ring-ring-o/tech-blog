@@ -63,8 +63,8 @@ const formatDate = (date: Date) => {
         {post.tags.map((tag) => (
           <a
             href={`/tags/${tag}`}
-            class="px-3 py-1 text-sm rounded-full hover:opacity-80 transition-opacity"
-            style="background-color: var(--color-code-bg); color: var(--color-text-main)"
+            class="px-3 py-1 text-sm rounded-full border hover:opacity-80 transition-opacity"
+            style="background-color: var(--color-bg); color: var(--color-text-main); border-color: var(--color-border)"
             data-pagefind-filter="tag"
           >
             {tag}
