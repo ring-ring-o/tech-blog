@@ -15,7 +15,8 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "astro": "^5.14.1"
+    "astro": "^5.14.1",
+    "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.6.0",

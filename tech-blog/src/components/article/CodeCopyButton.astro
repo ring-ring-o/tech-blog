@@ -3,20 +3,42 @@
 ---
 
 <script>
-  // コードブロックにコピーボタンを追加
-  function addCopyButtons() {
-    const codeBlocks = document.querySelectorAll('pre')
+  // コピーアイコンSVG
+  const copyIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`
+
+  // チェックアイコンSVG（コピー完了時）
+  const checkIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+
+  // コードブロックにヘッダーとコピーボタンを追加
+  function addCodeBlockHeaders() {
+    const codeBlocks = document.querySelectorAll('pre[data-language]')
 
     codeBlocks.forEach((block) => {
-      // 既にボタンが追加されている場合はスキップ
-      if (block.querySelector('.copy-button')) {
+      // 既にヘッダーが追加されている場合はスキップ
+      if (block.querySelector('.code-header')) {
         return
+      }
+
+      const language = block.getAttribute('data-language')
+      const filename = block.getAttribute('data-filename')
+
+      // ヘッダーを作成
+      const header = document.createElement('div')
+      header.className = 'code-header'
+
+      // 言語・ファイル名テキスト
+      const titleSpan = document.createElement('span')
+      titleSpan.className = 'code-title'
+      if (filename) {
+        titleSpan.textContent = `${language} • ${filename}`
+      } else {
+        titleSpan.textContent = language
       }
 
       // コピーボタンを作成
       const button = document.createElement('button')
       button.className = 'copy-button'
-      button.textContent = 'コピー'
+      button.innerHTML = copyIconSVG
       button.setAttribute('aria-label', 'コードをコピー')
 
       // クリックイベント
@@ -26,52 +48,78 @@
 
         try {
           await navigator.clipboard.writeText(code.textContent || '')
-          button.textContent = 'コピーしました！'
+          button.innerHTML = checkIconSVG
           button.classList.add('copied')
 
           setTimeout(() => {
-            button.textContent = 'コピー'
+            button.innerHTML = copyIconSVG
             button.classList.remove('copied')
           }, 2000)
         } catch (err) {
           console.error('コピーに失敗しました:', err)
-          button.textContent = 'エラー'
         }
       })
 
-      // ボタンをコードブロックに追加
+      // ヘッダーに要素を追加
+      header.appendChild(titleSpan)
+      header.appendChild(button)
+
+      // ブロックの先頭にヘッダーを挿入
+      block.insertBefore(header, block.firstChild)
       block.style.position = 'relative'
-      block.appendChild(button)
     })
   }
 
   // ページロード時とビュー遷移時に実行
-  addCopyButtons()
-  document.addEventListener('astro:page-load', addCopyButtons)
+  addCodeBlockHeaders()
+  document.addEventListener('astro:page-load', addCodeBlockHeaders)
 </script>
 
 <style is:global>
-  .copy-button {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+  /* コードブロックヘッダー */
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 0.5rem 1rem;
-    background-color: var(--color-accent);
-    color: white;
+    background-color: rgba(128, 128, 128, 0.1);
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    font-size: 0.875rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* 言語・ファイル名タイトル */
+  .code-title {
+    color: var(--color-text-sub);
+    font-weight: 500;
+  }
+
+  /* コピーボタン */
+  .code-header .copy-button {
+    padding: 0.25rem 0.5rem;
+    background-color: transparent;
+    color: rgba(128, 128, 128, 0.6);
     border: none;
     border-radius: 0.25rem;
-    font-size: 0.875rem;
     cursor: pointer;
-    transition: opacity 0.2s;
-    z-index: 10;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .copy-button:hover {
-    opacity: 0.8;
+  .code-header .copy-button:hover {
+    background-color: rgba(128, 128, 128, 0.15);
+    color: rgba(128, 128, 128, 0.9);
   }
 
-  .copy-button.copied {
-    background-color: #10b981;
+  .code-header .copy-button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .code-header .copy-button.copied {
+    color: rgba(16, 185, 129, 0.8);
   }
 
   pre {
