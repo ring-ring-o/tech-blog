@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import Breadcrumb from '../../components/common/Breadcrumb.astro'
 import { contentRepository } from '../../lib/repositories'
 
 const tags = await contentRepository.getAllTags()
@@ -10,6 +11,12 @@ const tags = await contentRepository.getAllTags()
   description="技術ブログのタグ一覧 - 興味のあるトピックから記事を探す"
 >
   <div class="max-w-5xl mx-auto">
+    <Breadcrumb
+      items={[
+        { label: 'ホーム', href: '/' },
+        { label: 'タグ一覧' }
+      ]}
+    />
     <h1 class="text-4xl font-bold mb-8">タグ一覧</h1>
 
     <p class="mb-8" style="color: var(--color-text-sub)">

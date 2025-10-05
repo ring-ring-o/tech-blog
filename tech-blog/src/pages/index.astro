@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import ArticleCard from '../components/article/ArticleCard.astro'
 import Pagination from '../components/common/Pagination.astro'
+import Breadcrumb from '../components/common/Breadcrumb.astro'
 import { contentRepository } from '../lib/repositories'
 
 const POSTS_PER_PAGE = 10
@@ -18,6 +19,11 @@ const currentPosts = allPosts.slice(startIndex, endIndex)
 
 <BaseLayout title="Tech Blog" description="技術ブログ - プログラミング、システム管理、セキュリティに関する情報">
   <div class="max-w-5xl mx-auto">
+    <Breadcrumb
+      items={[
+        { label: 'ホーム' }
+      ]}
+    />
     <h1 class="text-4xl font-bold mb-8">記事一覧</h1>
 
     <div>

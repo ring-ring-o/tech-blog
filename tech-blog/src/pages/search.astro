@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import Breadcrumb from '../components/common/Breadcrumb.astro'
 ---
 
 <BaseLayout
@@ -11,6 +12,12 @@ import BaseLayout from '../layouts/BaseLayout.astro'
   <script is:inline src="/pagefind/pagefind-ui.js" slot="head"></script>
 
   <div class="max-w-5xl mx-auto">
+    <Breadcrumb
+      items={[
+        { label: 'ホーム', href: '/' },
+        { label: '検索' }
+      ]}
+    />
     <h1 class="text-4xl font-bold mb-8">検索</h1>
 
     <!-- Pagefind検索UI -->

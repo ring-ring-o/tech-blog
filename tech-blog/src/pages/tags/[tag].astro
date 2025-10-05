@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import ArticleCard from '../../components/article/ArticleCard.astro'
 import Pagination from '../../components/common/Pagination.astro'
+import Breadcrumb from '../../components/common/Breadcrumb.astro'
 import { contentRepository } from '../../lib/repositories'
 
 export async function getStaticPaths() {
@@ -40,13 +41,13 @@ const { tag, posts, currentPage, totalPages } = Astro.props
   <div class="max-w-5xl mx-auto">
     <!-- ヘッダー -->
     <div class="mb-8">
-      <nav class="text-sm mb-4" style="color: var(--color-text-sub)">
-        <a href="/" class="hover:text-accent transition-colors">ホーム</a>
-        <span class="mx-2">/</span>
-        <a href="/tags" class="hover:text-accent transition-colors">タグ一覧</a>
-        <span class="mx-2">/</span>
-        <span>{tag}</span>
-      </nav>
+      <Breadcrumb
+        items={[
+          { label: 'ホーム', href: '/' },
+          { label: 'タグ一覧', href: '/tags' },
+          { label: tag }
+        ]}
+      />
 
       <h1 class="text-4xl font-bold mb-2">
         タグ: <span style="color: var(--color-accent)">{tag}</span>
@@ -87,9 +88,3 @@ const { tag, posts, currentPage, totalPages } = Astro.props
     )}
   </div>
 </BaseLayout>
-
-<style>
-  .hover\:text-accent:hover {
-    color: var(--color-accent);
-  }
-</style>

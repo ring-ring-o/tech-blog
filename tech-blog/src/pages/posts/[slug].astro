@@ -4,6 +4,7 @@ import TableOfContents from '../../components/article/TableOfContents.astro'
 import CodeCopyButton from '../../components/article/CodeCopyButton.astro'
 import AdSlot from '../../components/ads/AdSlot.astro'
 import TagList from '../../components/article/TagList.astro'
+import Breadcrumb from '../../components/common/Breadcrumb.astro'
 import { contentRepository } from '../../lib/repositories'
 import { getEntry, render } from 'astro:content'
 
@@ -45,6 +46,12 @@ const formatDate = (date: Date) => {
   <article class="max-w-5xl mx-auto" data-pagefind-body>
     <!-- 記事ヘッダー -->
     <header class="mb-8">
+      <Breadcrumb
+        items={[
+          { label: 'ホーム', href: '/' },
+          { label: post.title }
+        ]}
+      />
       <h1 class="text-4xl font-bold mb-4">{post.title}</h1>
 
       <div class="flex flex-wrap items-center gap-4 text-sm" style="color: var(--color-text-sub)">
