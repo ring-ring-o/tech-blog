@@ -1,34 +1,27 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
-import '@pagefind/default-ui/css/ui.css'
 ---
 
 <BaseLayout
   title="検索"
   description="技術ブログの記事を検索"
 >
+  <!-- Pagefind CSS -->
+  <link href="/pagefind/pagefind-ui.css" rel="stylesheet" slot="head" />
+  <script is:inline src="/pagefind/pagefind-ui.js" slot="head"></script>
+
   <div class="max-w-4xl mx-auto">
     <h1 class="text-4xl font-bold mb-8">検索</h1>
 
     <!-- Pagefind検索UI -->
     <div id="search" class="mb-8"></div>
-
-    <!-- 検索結果がない場合のメッセージ -->
-    <div id="no-results" class="hidden text-center py-12">
-      <p style="color: var(--color-text-sub)">
-        検索結果が見つかりませんでした。
-      </p>
-      <p class="mt-2 text-sm" style="color: var(--color-text-sub)">
-        別のキーワードで試してみてください。
-      </p>
-    </div>
   </div>
 </BaseLayout>
 
-<script>
-  // Pagefind UIを動的にロード
-  import('@pagefind/default-ui').then(({ PagefindUI }) => {
-    new PagefindUI({
+<script is:inline>
+  // Pagefind UIを初期化
+  window.addEventListener('DOMContentLoaded', () => {
+    new window.PagefindUI({
       element: '#search',
       showSubResults: true,
       showImages: false,
@@ -41,8 +34,8 @@ import '@pagefind/default-ui/css/ui.css'
         search_label: '検索',
         filters_label: 'フィルター',
         zero_results: '検索結果が見つかりませんでした',
-        many_results: '[count]件の記事が見つかりました',
-        one_result: '1件の記事が見つかりました',
+        many_results: '[COUNT]件の記事が見つかりました',
+        one_result: '[COUNT]件の記事が見つかりました',
         alt_search: '検索:',
         search_suggestion: '検索結果がない場合は、別のキーワードを試してみてください',
         searching: '検索中...',
@@ -105,13 +98,9 @@ import '@pagefind/default-ui/css/ui.css'
     font-weight: 600;
   }
 
-  /* クリアボタン */
+  /* クリアボタンを非表示 */
   .pagefind-ui__search-clear {
-    color: var(--color-text-sub) !important;
-  }
-
-  .pagefind-ui__search-clear:hover {
-    color: var(--color-accent) !important;
+    display: none !important;
   }
 
   /* メッセージ */
