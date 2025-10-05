@@ -20,19 +20,11 @@ const tags = await contentRepository.getAllTags()
       {tags.map((tag) => (
         <a
           href={`/tags/${encodeURIComponent(tag.name)}`}
-          class="tag-card border rounded-lg p-6 hover:shadow-lg transition-all"
-          style="background-color: var(--color-card-bg); border-color: var(--color-border)"
+          class="tag-card border rounded-lg p-6 hover:border-accent transition-colors"
+          style="background-color: var(--color-bg); border-color: var(--color-border)"
         >
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold">{tag.name}</h2>
-            <span
-              class="text-2xl font-bold"
-              style="color: var(--color-accent)"
-            >
-              {tag.count}
-            </span>
-          </div>
-          <p class="text-sm mt-2" style="color: var(--color-text-sub)">
+          <h2 class="text-xl font-bold mb-2">{tag.name}</h2>
+          <p class="text-sm" style="color: var(--color-text-sub)">
             {tag.count}件の記事
           </p>
         </a>
@@ -50,7 +42,7 @@ const tags = await contentRepository.getAllTags()
 </BaseLayout>
 
 <style>
-  .tag-card:hover {
+  .hover\:border-accent:hover {
     border-color: var(--color-accent);
   }
 </style>
