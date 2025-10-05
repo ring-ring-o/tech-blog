@@ -1,8 +1,15 @@
 ---
+import AdSlot from '../ads/AdSlot.astro'
+
 const currentYear = new Date().getFullYear()
 ---
 
 <footer class="border-t mt-16" style="background-color: var(--color-card-bg); border-color: var(--color-border)" data-pagefind-ignore>
+  <!-- フッター上部広告 -->
+  <div class="container mx-auto px-4 py-6">
+    <AdSlot placement="footer-top" />
+  </div>
+
   <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
       <!-- Copyright -->

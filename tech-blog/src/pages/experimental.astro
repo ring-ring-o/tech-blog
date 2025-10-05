@@ -1,0 +1,127 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+// 試験中の機能リスト
+const experiments = [
+  {
+    title: 'View Transitions API',
+    description: 'Astro 5のView Transitions APIを使用したページ遷移アニメーション',
+    status: '検証中',
+    relatedPosts: [
+      {
+        title: 'Astro 5でブログを構築する',
+        slug: '2025-01-15-astro-blog-tutorial',
+      },
+    ],
+  },
+  {
+    title: 'Astro DB',
+    description: '訪問者数カウンターやいいね機能のための軽量データベース',
+    status: '計画中',
+    relatedPosts: [],
+  },
+  {
+    title: 'コメント機能',
+    description: 'giscusを使用したGitHub Discussions連携コメントシステム',
+    status: '計画中',
+    relatedPosts: [],
+  },
+]
+---
+
+<BaseLayout
+  title="試験機能"
+  description="Tech Blogで実験的に導入している新技術と試験中の機能"
+>
+  <article class="max-w-4xl mx-auto">
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-4">試験機能</h1>
+      <p class="text-lg" style="color: var(--color-text-sub)">
+        このページでは、Tech Blogで実験的に導入している新技術や試験中の機能について紹介します。
+      </p>
+    </header>
+
+    <!-- 注意事項 -->
+    <div class="mb-8 p-4 border-l-4 rounded-r-lg" style="background-color: var(--color-code-bg); border-color: var(--color-accent)">
+      <p class="text-sm font-bold mb-2">⚠️ 注意事項</p>
+      <ul class="text-sm space-y-1" style="color: var(--color-text-sub)">
+        <li>• 試験機能は予告なく変更・削除される可能性があります</li>
+        <li>• 一部の機能はブラウザによって動作しない場合があります</li>
+        <li>• フィードバックは<a href="https://github.com/yourusername/tech-blog/issues" class="underline hover:opacity-80" style="color: var(--color-accent)">GitHub Issues</a>までお願いします</li>
+      </ul>
+    </div>
+
+    <!-- 試験機能リスト -->
+    <section class="space-y-6">
+      {
+        experiments.map((experiment) => (
+          <article
+            class="border rounded-lg p-6"
+            style="background-color: var(--color-card-bg); border-color: var(--color-border)"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <h2 class="text-2xl font-bold">{experiment.title}</h2>
+              <span
+                class="px-3 py-1 text-sm rounded-full"
+                style={
+                  experiment.status === '検証中'
+                    ? 'background-color: var(--color-accent); color: white'
+                    : 'background-color: var(--color-code-bg); color: var(--color-text-main)'
+                }
+              >
+                {experiment.status}
+              </span>
+            </div>
+
+            <p class="mb-4" style="color: var(--color-text-sub)">
+              {experiment.description}
+            </p>
+
+            {experiment.relatedPosts.length > 0 && (
+              <div>
+                <h3 class="text-sm font-bold mb-2">関連記事</h3>
+                <ul class="space-y-2">
+                  {experiment.relatedPosts.map((post) => (
+                    <li>
+                      <a
+                        href={`/posts/${post.slug}`}
+                        class="text-sm hover:opacity-80 transition-opacity"
+                        style="color: var(--color-accent)"
+                      >
+                        → {post.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </article>
+        ))
+      }
+    </section>
+
+    <!-- フィードバックセクション -->
+    <section class="mt-12 p-6 border rounded-lg" style="background-color: var(--color-card-bg); border-color: var(--color-border)">
+      <h2 class="text-2xl font-bold mb-4">フィードバックをお待ちしています</h2>
+      <p class="mb-4" style="color: var(--color-text-sub)">
+        試験機能についてのご意見・ご要望がありましたら、ぜひお聞かせください。
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a
+          href="https://github.com/yourusername/tech-blog/issues/new"
+          class="px-6 py-2 rounded-md font-medium transition-opacity hover:opacity-80"
+          style="background-color: var(--color-accent); color: white"
+        >
+          Issue を作成
+        </a>
+        <a
+          href="https://github.com/yourusername/tech-blog/discussions"
+          class="px-6 py-2 rounded-md font-medium transition-opacity hover:opacity-80 border"
+          style="border-color: var(--color-border)"
+        >
+          Discussionに参加
+        </a>
+      </div>
+    </section>
+  </article>
+</BaseLayout>

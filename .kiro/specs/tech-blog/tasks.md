@@ -110,44 +110,44 @@
   - Markdown編集可能な構造とする
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 10. アクセシビリティとレスポンシブデザイン
-- [ ] 10.1 セマンティックHTMLとARIAラベル
+- [x] 10. アクセシビリティとレスポンシブデザイン
+- [x] 10.1 セマンティックHTMLとARIAラベル
   - すべてのページで適切なセマンティックタグ（`<article>`, `<section>`, `<nav>`, `<header>`, `<footer>`, `<aside>`）を使用
   - インタラクティブ要素に適切なARIAラベルを設定
   - _Requirements: 5.6_
 
-- [ ] 10.2 キーボードナビゲーション
+- [x] 10.2 キーボードナビゲーション
   - すべてのリンク、ボタン、フォーム要素でキーボード操作（Tab、Enter、Space）を検証
   - フォーカスインジケーターを明示
   - _Requirements: 5.5_
 
-- [ ] 10.3 レスポンシブブレイクポイント対応
+- [x] 10.3 レスポンシブブレイクポイント対応
   - Tailwindのブレイクポイント（sm, md, lg, xl）でレイアウトを調整
   - モバイルファースト設計を徹底
   - _Requirements: 6.1, 6.4_
 
-- [ ] 11. パフォーマンス最適化
-- [ ] 11.1 画像最適化
+- [x] 11. パフォーマンス最適化
+- [x] 11.1 画像最適化
   - Astro Image Serviceで画像を最適化（WebP優先、最大幅1200px）
   - 遅延ローディング（loading="lazy"）を適用
   - _Requirements: 12.4_
 
-- [ ] 11.2 バンドルサイズ最適化
+- [x] 11.2 バンドルサイズ最適化
   - `pnpm build`でバンドルサイズを計測し、gzip圧縮後100KB以内を維持
   - 不要なJavaScriptを削除
   - _Requirements: 9.3_
 
-- [ ] 11.3 Lighthouse監査
+- [x] 11.3 Lighthouse監査
   - Performance、Accessibility、Best Practices、SEOの各項目で95点以上を達成
   - Core Web Vitals（LCP < 2.5s, FID < 100ms, CLS < 0.1）を検証
   - _Requirements: 9.1, 9.2_
 
-- [ ] 12. 試験機能ページとオプショナル広告配置（Phase 3）
-- [ ] 12.1 試験機能ページ
+- [x] 12. 試験機能ページとオプショナル広告配置（Phase 3）
+- [x] 12.1 試験機能ページ
   - `src/pages/experimental.astro`で新技術の実験的導入、試験中の機能説明、関連記事へのリンクを表示
   - _Requirements: 11.1_
 
-- [ ] 12.2 広告配置機能
+- [x] 12.2 広告配置機能
   - 環境変数（`ENABLE_ADS`）で広告表示ON/OFFを制御
   - `src/components/ads/AdSlot.astro`でサイドバー（デスクトップのみ）、記事下部、フッター上部に広告スロットを配置
   - 広告非表示時もレイアウト崩れなく表示

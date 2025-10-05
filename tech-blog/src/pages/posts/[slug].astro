@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import TableOfContents from '../../components/article/TableOfContents.astro'
 import CodeCopyButton from '../../components/article/CodeCopyButton.astro'
+import AdSlot from '../../components/ads/AdSlot.astro'
 import { contentRepository } from '../../lib/repositories'
 import { render } from 'astro:content'
 
@@ -84,6 +85,11 @@ const formatDate = (date: Date) => {
           <TableOfContents headings={headings} />
         </aside>
       )}
+    </div>
+
+    <!-- 記事下部広告 -->
+    <div class="mt-12">
+      <AdSlot placement="article-bottom" />
     </div>
   </article>
 

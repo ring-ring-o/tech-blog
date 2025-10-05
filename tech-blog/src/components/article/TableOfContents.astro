@@ -17,7 +17,7 @@ const tocHeadings = headings.filter((h) => h.depth <= 3)
 
 {
   tocHeadings.length > 0 && (
-    <nav class="sticky top-24 p-4 rounded-lg border" style="background-color: var(--color-card-bg); border-color: var(--color-border)">
+    <nav class="sticky top-24 p-4 rounded-lg border" style="background-color: var(--color-card-bg); border-color: var(--color-border)" aria-label="目次">
       <h2 class="text-lg font-bold mb-4">目次</h2>
       <ul class="space-y-2 text-sm">
         {tocHeadings.map((heading) => (

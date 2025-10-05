@@ -1,0 +1,59 @@
+---
+interface Props {
+  placement: 'sidebar' | 'article-bottom' | 'footer-top'
+  class?: string
+}
+
+const { placement, class: className = '' } = Astro.props
+
+// 環境変数で広告表示ON/OFF制御
+const enableAds = import.meta.env.PUBLIC_ENABLE_ADS === 'true'
+
+// プレースメント別のスタイル
+const placementStyles = {
+  sidebar: 'max-w-[300px] h-[250px]',
+  'article-bottom': 'max-w-[728px] h-[90px]',
+  'footer-top': 'max-w-[970px] h-[90px]',
+}
+
+const style = placementStyles[placement]
+---
+
+{
+  enableAds ? (
+    <div
+      class={`ad-slot ${style} ${className} mx-auto border rounded-lg flex items-center justify-center`}
+      style="background-color: var(--color-code-bg); border-color: var(--color-border)"
+      data-placement={placement}
+    >
+      <!-- 広告スロット -->
+      <div class="text-center p-4">
+        <p class="text-sm font-medium mb-2" style="color: var(--color-text-sub)">
+          Advertisement
+        </p>
+        <p class="text-xs" style="color: var(--color-text-sub)">
+          {placement === 'sidebar' && '300 x 250'}
+          {placement === 'article-bottom' && '728 x 90'}
+          {placement === 'footer-top' && '970 x 90'}
+        </p>
+      </div>
+    </div>
+  ) : (
+    <!-- 広告非表示時は何も表示しない（レイアウト崩れなし） -->
+    <div class="hidden" />
+  )
+}
+
+<style>
+  .ad-slot {
+    /* 広告スロットの基本スタイル */
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 実際の広告コード挿入時にこのクラスを使用 */
+  .ad-slot[data-ad-loaded='true'] {
+    background-color: transparent;
+    border-color: transparent;
+  }
+</style>
