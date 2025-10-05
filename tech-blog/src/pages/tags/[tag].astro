@@ -57,7 +57,7 @@ const { tag, posts, currentPage, totalPages } = Astro.props
     </div>
 
     <!-- 記事一覧 -->
-    <div class="space-y-6">
+    <div>
       {posts.map((post) => (
         <ArticleCard post={post} />
       ))}

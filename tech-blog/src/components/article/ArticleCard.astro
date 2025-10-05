@@ -26,8 +26,8 @@ const formatDate = (date: Date) => {
 ---
 
 <article
-  class="border rounded-lg p-6 hover:shadow-lg transition-shadow"
-  style="background-color: var(--color-card-bg); border-color: var(--color-border)"
+  class="border-b pb-6 pt-6 first:pt-0"
+  style="border-color: var(--color-border)"
 >
   <a href={`/posts/${post.slug}`} class="block">
     <h2 class="text-2xl font-bold mb-2 hover:text-accent transition-colors">
@@ -49,8 +49,8 @@ const formatDate = (date: Date) => {
     <div class="flex flex-wrap gap-2">
       {displayTags.map((tag) => (
         <span
-          class="px-3 py-1 text-sm rounded-full"
-          style="background-color: var(--color-code-bg); color: var(--color-text-main)"
+          class="px-3 py-1 text-sm rounded-full border"
+          style="background-color: var(--color-bg); color: var(--color-text-main); border-color: var(--color-border)"
         >
           {tag}
         </span>
