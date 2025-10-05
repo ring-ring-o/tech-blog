@@ -1,0 +1,80 @@
+---
+// コードブロックにコピーボタンを追加するクライアントサイドスクリプト
+---
+
+<script>
+  // コードブロックにコピーボタンを追加
+  function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('pre')
+
+    codeBlocks.forEach((block) => {
+      // 既にボタンが追加されている場合はスキップ
+      if (block.querySelector('.copy-button')) {
+        return
+      }
+
+      // コピーボタンを作成
+      const button = document.createElement('button')
+      button.className = 'copy-button'
+      button.textContent = 'コピー'
+      button.setAttribute('aria-label', 'コードをコピー')
+
+      // クリックイベント
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')
+        if (!code) return
+
+        try {
+          await navigator.clipboard.writeText(code.textContent || '')
+          button.textContent = 'コピーしました！'
+          button.classList.add('copied')
+
+          setTimeout(() => {
+            button.textContent = 'コピー'
+            button.classList.remove('copied')
+          }, 2000)
+        } catch (err) {
+          console.error('コピーに失敗しました:', err)
+          button.textContent = 'エラー'
+        }
+      })
+
+      // ボタンをコードブロックに追加
+      block.style.position = 'relative'
+      block.appendChild(button)
+    })
+  }
+
+  // ページロード時とビュー遷移時に実行
+  addCopyButtons()
+  document.addEventListener('astro:page-load', addCopyButtons)
+</script>
+
+<style is:global>
+  .copy-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+
+  .copy-button:hover {
+    opacity: 0.8;
+  }
+
+  .copy-button.copied {
+    background-color: #10b981;
+  }
+
+  pre {
+    position: relative;
+  }
+</style>

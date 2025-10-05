@@ -1,0 +1,170 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import TableOfContents from '../../components/article/TableOfContents.astro'
+import CodeCopyButton from '../../components/article/CodeCopyButton.astro'
+import { contentRepository } from '../../lib/repositories'
+import { render } from 'astro:content'
+
+export async function getStaticPaths() {
+  const allPosts = await contentRepository.getAllPosts()
+
+  return allPosts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }))
+}
+
+const { post } = Astro.props
+
+// Content Collectionsから記事の本文をレンダリング
+const { Content, headings } = await render({
+  collection: 'blog',
+  id: post.id,
+})
+
+// 日付をフォーマット
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date)
+}
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.description}
+  type="article"
+  publishedAt={post.publishedAt}
+  updatedAt={post.updatedAt}
+>
+  <article class="max-w-4xl mx-auto" data-pagefind-body>
+    <!-- 記事ヘッダー -->
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-4">{post.title}</h1>
+
+      <div class="flex flex-wrap items-center gap-4 text-sm" style="color: var(--color-text-sub)">
+        <time datetime={post.publishedAt.toISOString()}>
+          公開: {formatDate(post.publishedAt)}
+        </time>
+
+        {post.updatedAt && (
+          <time datetime={post.updatedAt.toISOString()}>
+            更新: {formatDate(post.updatedAt)}
+          </time>
+        )}
+      </div>
+
+      <!-- タグ一覧 -->
+      <div class="flex flex-wrap gap-2 mt-4">
+        {post.tags.map((tag) => (
+          <a
+            href={`/tags/${tag}`}
+            class="px-3 py-1 text-sm rounded-full hover:opacity-80 transition-opacity"
+            style="background-color: var(--color-code-bg); color: var(--color-text-main)"
+            data-pagefind-filter="tag"
+          >
+            {tag}
+          </a>
+        ))}
+      </div>
+    </header>
+
+    <!-- 目次とコンテンツのグリッドレイアウト -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-8">
+      <!-- 記事本文 -->
+      <div class="prose prose-lg max-w-none">
+        <Content />
+      </div>
+
+      <!-- 目次（デスクトップのみ表示） -->
+      {headings.length > 0 && (
+        <aside class="hidden lg:block" data-pagefind-ignore>
+          <TableOfContents headings={headings} />
+        </aside>
+      )}
+    </div>
+  </article>
+
+  <!-- コードコピーボタンを追加 -->
+  <CodeCopyButton />
+</BaseLayout>
+
+<style is:global>
+  /* Proseスタイリング（記事本文） */
+  .prose {
+    color: var(--color-text-main);
+  }
+
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    color: var(--color-text-main);
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose h2 {
+    font-size: 1.875rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .prose h3 {
+    font-size: 1.5rem;
+  }
+
+  .prose p {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+  }
+
+  .prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .prose a:hover {
+    opacity: 0.8;
+  }
+
+  .prose code {
+    background-color: var(--color-code-bg);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+
+  .prose pre {
+    background-color: var(--color-code-bg);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+
+  .prose ul,
+  .prose ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+
+  .prose blockquote {
+    border-left: 4px solid var(--color-accent);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: var(--color-text-sub);
+    font-style: italic;
+  }
+</style>

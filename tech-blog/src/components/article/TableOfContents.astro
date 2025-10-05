@@ -1,0 +1,45 @@
+---
+interface Heading {
+  depth: number
+  text: string
+  slug: string
+}
+
+interface Props {
+  headings: Heading[]
+}
+
+const { headings } = Astro.props
+
+// h2とh3のみを表示
+const tocHeadings = headings.filter((h) => h.depth <= 3)
+---
+
+{
+  tocHeadings.length > 0 && (
+    <nav class="sticky top-24 p-4 rounded-lg border" style="background-color: var(--color-card-bg); border-color: var(--color-border)">
+      <h2 class="text-lg font-bold mb-4">目次</h2>
+      <ul class="space-y-2 text-sm">
+        {tocHeadings.map((heading) => (
+          <li
+            class={heading.depth === 3 ? 'ml-4' : ''}
+            style="color: var(--color-text-sub)"
+          >
+            <a
+              href={`#${heading.slug}`}
+              class="hover:text-accent transition-colors block"
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  .hover\:text-accent:hover {
+    color: var(--color-accent);
+  }
+</style>

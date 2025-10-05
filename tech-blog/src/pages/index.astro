@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import ArticleCard from '../components/article/ArticleCard.astro'
+import Pagination from '../components/common/Pagination.astro'
+import { contentRepository } from '../lib/repositories'
+
+const POSTS_PER_PAGE = 10
+const currentPage = 1
+
+const allPosts = await contentRepository.getAllPosts()
+const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE)
+
+// 現在のページの記事のみを取得
+const startIndex = (currentPage - 1) * POSTS_PER_PAGE
+const endIndex = startIndex + POSTS_PER_PAGE
+const currentPosts = allPosts.slice(startIndex, endIndex)
+---
+
+<BaseLayout title="Tech Blog" description="技術ブログ - プログラミング、システム管理、セキュリティに関する情報">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">最新記事</h1>
+
+    <div class="space-y-6">
+      {currentPosts.map((post) => (
+        <ArticleCard post={post} />
+      ))}
+    </div>
+
+    {totalPages > 1 && (
+      <Pagination currentPage={currentPage} totalPages={totalPages} />
+    )}
+  </div>
+</BaseLayout>

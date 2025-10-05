@@ -1,0 +1,77 @@
+---
+interface Props {
+  title: string
+  description?: string
+  image?: string
+  type?: 'website' | 'article'
+  publishedAt?: Date
+  updatedAt?: Date
+}
+
+const {
+  title,
+  description = '技術ブログ - プログラミング、システム管理、セキュリティに関する情報',
+  image = '/og-image.png',
+  type = 'website',
+  publishedAt,
+  updatedAt,
+} = Astro.props
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site)
+const imageURL = new URL(image, Astro.site)
+---
+
+<!-- SEO Meta Tags -->
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Open Graph -->
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:image" content={imageURL} />
+<meta property="og:site_name" content="Tech Blog" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageURL} />
+
+<!-- Structured Data -->
+{
+  type === 'article' && publishedAt && (
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description: description,
+      datePublished: publishedAt.toISOString(),
+      dateModified: updatedAt ? updatedAt.toISOString() : publishedAt.toISOString(),
+      author: {
+        '@type': 'Person',
+        name: 'Tech Blogger',
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Tech Blog',
+        logo: {
+          '@type': 'ImageObject',
+          url: new URL('/logo.png', Astro.site).toString(),
+        },
+      },
+    })} />
+  )
+}
+
+{
+  type === 'website' && (
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      name: 'Tech Blog',
+      description: description,
+    })} />
+  )
+}

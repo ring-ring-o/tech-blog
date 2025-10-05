@@ -1,0 +1,39 @@
+---
+const currentYear = new Date().getFullYear()
+---
+
+<footer class="border-t mt-16" style="background-color: var(--color-card-bg); border-color: var(--color-border)" data-pagefind-ignore>
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+      <!-- Copyright -->
+      <p class="text-sm" style="color: var(--color-text-sub)">
+        &copy; {currentYear} Tech Blog. All rights reserved.
+      </p>
+
+      <!-- Links -->
+      <div class="flex gap-4 text-sm">
+        <a href="/privacy" class="hover:text-accent transition-colors" style="color: var(--color-text-sub)">
+          プライバシーポリシー
+        </a>
+        <a href="/terms" class="hover:text-accent transition-colors" style="color: var(--color-text-sub)">
+          利用規約
+        </a>
+        <a
+          href="https://github.com/yourusername/tech-blog"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-accent transition-colors"
+          style="color: var(--color-text-sub)"
+        >
+          GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .hover\:text-accent:hover {
+    color: var(--color-accent);
+  }
+</style>

@@ -1,0 +1,66 @@
+---
+import type { Post } from '../../lib/types/content'
+
+interface Props {
+  post: Post
+}
+
+const { post } = Astro.props
+
+// タグは最大3つまで表示
+const displayTags = post.tags.slice(0, 3)
+
+// 概要は150文字に制限
+const truncatedDescription = post.description.length > 150
+  ? post.description.slice(0, 150) + '...'
+  : post.description
+
+// 日付をフォーマット
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date)
+}
+---
+
+<article
+  class="border rounded-lg p-6 hover:shadow-lg transition-shadow"
+  style="background-color: var(--color-card-bg); border-color: var(--color-border)"
+>
+  <a href={`/posts/${post.slug}`} class="block">
+    <h2 class="text-2xl font-bold mb-2 hover:text-accent transition-colors">
+      {post.title}
+    </h2>
+
+    <time
+      datetime={post.publishedAt.toISOString()}
+      class="text-sm mb-3 block"
+      style="color: var(--color-text-sub)"
+    >
+      {formatDate(post.publishedAt)}
+    </time>
+
+    <p class="mb-4" style="color: var(--color-text-sub)">
+      {truncatedDescription}
+    </p>
+
+    <div class="flex flex-wrap gap-2">
+      {displayTags.map((tag) => (
+        <span
+          class="px-3 py-1 text-sm rounded-full"
+          style="background-color: var(--color-code-bg); color: var(--color-text-main)"
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  </a>
+</article>
+
+<style>
+  .hover\:text-accent:hover {
+    color: var(--color-accent);
+  }
+</style>

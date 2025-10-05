@@ -1,0 +1,47 @@
+---
+import '../styles/global.css'
+import SEOHead from '../components/layout/SEOHead.astro'
+import Header from '../components/layout/Header.astro'
+import Footer from '../components/layout/Footer.astro'
+
+interface Props {
+  title: string
+  description?: string
+  image?: string
+  type?: 'website' | 'article'
+  publishedAt?: Date
+  updatedAt?: Date
+}
+
+const { title, description, image, type = 'website', publishedAt, updatedAt } = Astro.props
+const fullTitle = title === 'Tech Blog' ? title : `${title} | Tech Blog`
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{fullTitle}</title>
+
+    <SEOHead
+      title={fullTitle}
+      description={description}
+      image={image}
+      type={type}
+      publishedAt={publishedAt}
+      updatedAt={updatedAt}
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+
+    <main class="flex-1 container mx-auto px-4 py-8">
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>

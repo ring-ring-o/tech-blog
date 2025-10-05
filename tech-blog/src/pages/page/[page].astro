@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import ArticleCard from '../../components/article/ArticleCard.astro'
+import Pagination from '../../components/common/Pagination.astro'
+import { contentRepository } from '../../lib/repositories'
+
+export async function getStaticPaths() {
+  const POSTS_PER_PAGE = 10
+  const allPosts = await contentRepository.getAllPosts()
+  const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE)
+
+  return Array.from({ length: totalPages }, (_, i) => {
+    const page = i + 1
+    const startIndex = (page - 1) * POSTS_PER_PAGE
+    const endIndex = startIndex + POSTS_PER_PAGE
+
+    return {
+      params: { page: page.toString() },
+      props: {
+        posts: allPosts.slice(startIndex, endIndex),
+        currentPage: page,
+        totalPages,
+      },
+    }
+  })
+}
+
+const { posts, currentPage, totalPages } = Astro.props
+---
+
+<BaseLayout
+  title={`記事一覧 - ページ ${currentPage}`}
+  description="技術ブログの記事一覧"
+>
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">最新記事</h1>
+
+    <div class="space-y-6">
+      {posts.map((post) => (
+        <ArticleCard post={post} />
+      ))}
+    </div>
+
+    <Pagination currentPage={currentPage} totalPages={totalPages} />
+  </div>
+</BaseLayout>
