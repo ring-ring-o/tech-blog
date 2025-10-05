@@ -11,6 +11,7 @@
   --color-border: #e0e0e0;
   --color-accent: #0066cc;
   --color-code-bg: #f5f5f5;
+  --color-hover-bg: #ebebeb;
 }
 
 [data-theme='dark'] {
@@ -23,6 +24,7 @@
   --color-border: #3a3a3a;
   --color-accent: #4a9eff;
   --color-code-bg: #1f1f1f;
+  --color-hover-bg: #1a1a1a;
 }
 
 /* システムフォントスタック */
@@ -51,4 +53,13 @@ button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* 共通ホバースタイル - クリッカブル領域 */
+.hoverable-area {
+  transition: background-color 0.2s ease;
+}
+
+.hoverable-area:hover {
+  background-color: var(--color-hover-bg);
 }

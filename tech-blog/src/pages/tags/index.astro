@@ -20,8 +20,8 @@ const tags = await contentRepository.getAllTags()
       {tags.map((tag) => (
         <a
           href={`/tags/${encodeURIComponent(tag.name)}`}
-          class="tag-card border rounded-lg p-6 hover:border-accent transition-colors"
-          style="background-color: var(--color-bg); border-color: var(--color-border)"
+          class="tag-card border rounded-lg p-6 hover:border-accent transition-colors hoverable-area"
+          style="border-color: var(--color-border)"
         >
           <h2 class="text-xl font-bold mb-2">{tag.name}</h2>
           <p class="text-sm" style="color: var(--color-text-sub)">

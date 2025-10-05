@@ -12,8 +12,8 @@ const displayTags = maxDisplay ? tags.slice(0, maxDisplay) : tags
   {displayTags.map((tag) => (
     <a
       href={`/tags/${tag}`}
-      class="px-3 py-1 text-sm rounded-full border hover:border-accent transition-colors"
-      style="background-color: var(--color-bg); color: var(--color-text-main); border-color: var(--color-border)"
+      class="px-3 py-1 text-sm rounded-full border hover:border-accent transition-colors hoverable-area"
+      style="color: var(--color-text-main); border-color: var(--color-border)"
       data-pagefind-filter="tag"
       onclick="event.stopPropagation()"
     >
