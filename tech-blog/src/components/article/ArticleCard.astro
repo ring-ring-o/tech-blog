@@ -1,14 +1,12 @@
 ---
 import type { Post } from '../../lib/types/content'
+import TagList from './TagList.astro'
 
 interface Props {
   post: Post
 }
 
 const { post } = Astro.props
-
-// タグは最大3つまで表示
-const displayTags = post.tags.slice(0, 3)
 
 // 概要は150文字に制限
 const truncatedDescription = post.description.length > 150
@@ -29,7 +27,7 @@ const formatDate = (date: Date) => {
   class="border-b pb-6 pt-6 first:pt-0"
   style="border-color: var(--color-border)"
 >
-  <a href={`/posts/${post.slug}`} class="block">
+  <a href={`/posts/${post.slug}`} class="block mb-4">
     <h2 class="text-2xl font-bold mb-2 hover:text-accent transition-colors">
       {post.title}
     </h2>
@@ -42,21 +40,12 @@ const formatDate = (date: Date) => {
       {formatDate(post.publishedAt)}
     </time>
 
-    <p class="mb-4" style="color: var(--color-text-sub)">
+    <p class="mb-0" style="color: var(--color-text-sub)">
       {truncatedDescription}
     </p>
-
-    <div class="flex flex-wrap gap-2">
-      {displayTags.map((tag) => (
-        <span
-          class="px-3 py-1 text-sm rounded-full border"
-          style="background-color: var(--color-bg); color: var(--color-text-main); border-color: var(--color-border)"
-        >
-          {tag}
-        </span>
-      ))}
-    </div>
   </a>
+
+  <TagList tags={post.tags} maxDisplay={3} />
 </article>
 
 <style>

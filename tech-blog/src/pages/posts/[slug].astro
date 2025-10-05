@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import TableOfContents from '../../components/article/TableOfContents.astro'
 import CodeCopyButton from '../../components/article/CodeCopyButton.astro'
 import AdSlot from '../../components/ads/AdSlot.astro'
+import TagList from '../../components/article/TagList.astro'
 import { contentRepository } from '../../lib/repositories'
 import { getEntry, render } from 'astro:content'
 
@@ -59,17 +60,8 @@ const formatDate = (date: Date) => {
       </div>
 
       <!-- タグ一覧 -->
-      <div class="flex flex-wrap gap-2 mt-4">
-        {post.tags.map((tag) => (
-          <a
-            href={`/tags/${tag}`}
-            class="px-3 py-1 text-sm rounded-full border hover:opacity-80 transition-opacity"
-            style="background-color: var(--color-bg); color: var(--color-text-main); border-color: var(--color-border)"
-            data-pagefind-filter="tag"
-          >
-            {tag}
-          </a>
-        ))}
+      <div class="mt-4">
+        <TagList tags={post.tags} />
       </div>
     </header>
 

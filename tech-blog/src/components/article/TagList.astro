@@ -1,0 +1,29 @@
+---
+interface Props {
+  tags: string[]
+  maxDisplay?: number
+}
+
+const { tags, maxDisplay } = Astro.props
+const displayTags = maxDisplay ? tags.slice(0, maxDisplay) : tags
+---
+
+<div class="flex flex-wrap gap-2">
+  {displayTags.map((tag) => (
+    <a
+      href={`/tags/${tag}`}
+      class="px-3 py-1 text-sm rounded-full border hover:border-accent transition-colors"
+      style="background-color: var(--color-bg); color: var(--color-text-main); border-color: var(--color-border)"
+      data-pagefind-filter="tag"
+      onclick="event.stopPropagation()"
+    >
+      {tag}
+    </a>
+  ))}
+</div>
+
+<style>
+  .hover\:border-accent:hover {
+    border-color: var(--color-accent);
+  }
+</style>
