@@ -11,92 +11,50 @@ const getPageUrl = (page: number) => {
   if (page === 1) return baseUrl || '/'
   return `${baseUrl}/page/${page}`
 }
-
-const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
-
-// 表示するページ番号を制限（現在のページの前後2ページ）
-const visiblePages = pages.filter((page) => {
-  if (page === 1 || page === totalPages) return true
-  return Math.abs(page - currentPage) <= 2
-})
 ---
 
 {
   totalPages > 1 && (
-    <nav class="flex justify-center items-center gap-2 mt-8" aria-label="ページネーション">
+    <nav class="flex justify-center items-center gap-8 mt-8" aria-label="ページネーション">
       {/* 前のページ */}
       {currentPage > 1 ? (
         <a
           href={getPageUrl(currentPage - 1)}
-          class="px-4 py-2 rounded-md border transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-          style="border-color: var(--color-border)"
+          class="flex-1 max-w-xs px-6 py-3 text-center hover:text-accent transition-colors rounded hoverable-area"
           aria-label="前のページ"
         >
-          ← 前へ
+          ← 前のページ
         </a>
       ) : (
         <span
-          class="px-4 py-2 rounded-md border opacity-50 cursor-not-allowed"
-          style="border-color: var(--color-border)"
+          class="flex-1 max-w-xs px-6 py-3 text-center opacity-50 cursor-not-allowed"
         >
-          ← 前へ
+          ← 前のページ
         </span>
       )}
-
-      {/* ページ番号 */}
-      <div class="flex gap-2">
-        {visiblePages.map((page, index) => {
-          const prevPage = visiblePages[index - 1]
-          const showEllipsis = prevPage && page - prevPage > 1
-
-          return (
-            <>
-              {showEllipsis && (
-                <span class="px-2" style="color: var(--color-text-sub)">
-                  ...
-                </span>
-              )}
-              {page === currentPage ? (
-                <span
-                  class="px-4 py-2 rounded-md font-bold"
-                  style="background-color: var(--color-accent); color: white"
-                  aria-current="page"
-                >
-                  {page}
-                </span>
-              ) : (
-                <a
-                  href={getPageUrl(page)}
-                  class="px-4 py-2 rounded-md border transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-                  style="border-color: var(--color-border)"
-                  aria-label={`ページ ${page}`}
-                >
-                  {page}
-                </a>
-              )}
-            </>
-          )
-        })}
-      </div>
 
       {/* 次のページ */}
       {currentPage < totalPages ? (
         <a
           href={getPageUrl(currentPage + 1)}
-          class="px-4 py-2 rounded-md border transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-          style="border-color: var(--color-border)"
+          class="flex-1 max-w-xs px-6 py-3 text-center hover:text-accent transition-colors rounded hoverable-area"
           aria-label="次のページ"
         >
-          次へ →
+          次のページ →
         </a>
       ) : (
         <span
-          class="px-4 py-2 rounded-md border opacity-50 cursor-not-allowed"
-          style="border-color: var(--color-border)"
+          class="flex-1 max-w-xs px-6 py-3 text-center opacity-50 cursor-not-allowed"
         >
-          次へ →
+          次のページ →
         </span>
       )}
     </nav>
   )
 }
+
+<style>
+  .hover\:text-accent:hover {
+    color: var(--color-accent);
+  }
+</style>
