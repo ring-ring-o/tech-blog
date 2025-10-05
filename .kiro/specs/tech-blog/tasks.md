@@ -153,40 +153,40 @@
   - 広告非表示時もレイアウト崩れなく表示
   - _Requirements: 11.2, 11.3_
 
-- [ ] 13. ドキュメント作成
-- [ ] 13.1 README.md
+- [x] 13. ドキュメント作成
+- [x] 13.1 README.md
   - プロジェクト概要、セットアップ手順（pnpm install, pnpm dev, pnpm build, pnpm preview）を記載
   - _Requirements: すべての要件に関連_
 
-- [ ] 13.2 CONTRIBUTING.md
+- [x] 13.2 CONTRIBUTING.md
   - 記事追加・更新手順（Markdown形式、frontmatter記述、ファイル名規則）を記載
   - _Requirements: 12.2, 12.3_
 
-- [ ] 13.3 DEPLOYMENT.md
+- [x] 13.3 DEPLOYMENT.md
   - デプロイ手順（Vercel/Netlify）、環境変数設定（サイトURL、広告フラグ）を記載
   - _Requirements: すべての要件に関連_
 
-- [ ] 14. デプロイ設定とCI/CD
-- [ ] 14.1 Vercel/Netlify設定ファイル
+- [x] 14. デプロイ設定とCI/CD
+- [x] 14.1 Vercel/Netlify設定ファイル
   - `vercel.json`または`netlify.toml`でビルドコマンド（`pnpm build && npx pagefind --site dist`）を設定
   - 環境変数サンプル（`.env.example`）を作成
   - _Requirements: すべての要件に関連_
 
-- [ ] 14.2 GitHub Actions（オプション）
+- [x] 14.2 GitHub Actions（オプション）
   - 自動ビルド・デプロイ、Lighthouse CI、依存関係スキャンを設定
   - _Requirements: 9.1, 9.4_
 
-- [ ] 15. 総合テストと最終検証
-- [ ] 15.1 機能テスト
+- [x] 15. 総合テストと最終検証
+- [x] 15.1 機能テスト
   - ホームページから記事詳細、検索、タグフィルタリング、テーマ切り替えの全フローをテスト
   - モバイル・デスクトップでレスポンシブデザインを検証
   - _Requirements: すべての要件_
 
-- [ ] 15.2 パフォーマンステスト
+- [x] 15.2 パフォーマンステスト
   - Lighthouse監査で全項目95点以上を確認
   - 100記事を追加し、ビルド時間1分以内を確認
   - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 15.3 アクセシビリティ検証
+- [x] 15.3 アクセシビリティ検証
   - WCAG AA準拠を確認（コントラスト比、キーボードナビゲーション、スクリーンリーダー対応）
   - _Requirements: 5.4, 5.5, 5.6_
