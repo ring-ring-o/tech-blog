@@ -10,14 +10,7 @@ interface Props {
   loading?: 'lazy' | 'eager'
 }
 
-const {
-  src,
-  alt,
-  width = 1200,
-  height,
-  class: className = '',
-  loading = 'lazy',
-} = Astro.props
+const { src, alt, width = 1200, height, class: className = '', loading = 'lazy' } = Astro.props
 
 // publicディレクトリの画像パス
 const imagePath = src.startsWith('/') ? src : `/${src}`

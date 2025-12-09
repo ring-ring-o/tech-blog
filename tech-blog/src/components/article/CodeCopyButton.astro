@@ -1,128 +1,268 @@
 ---
-// コードブロックにコピーボタンを追加するクライアントサイドスクリプト
+/**
+ * @fileoverview コードブロックヘッダーコンポーネント
+ * @description コードブロックにファイル名/言語名とコピーボタンを追加するクライアントサイドスクリプト
+ *
+ * @remarks
+ * このコンポーネントは記事ページに配置され、以下の機能を提供する：
+ * - コードブロックヘッダーの自動挿入
+ * - ファイル名が指定されている場合はファイル名を表示
+ * - ファイル名がない場合は言語名を表示
+ * - ワンクリックでコードをクリップボードにコピー
+ * - Astroのビュー遷移に対応
+ */
 ---
 
 <script>
-  // コピーアイコンSVG
-  const copyIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`
+  /**
+   * コピーアイコンのSVG文字列
+   * @description クリップボードにコピーする前のデフォルト状態で表示
+   */
+  const COPY_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
-  // チェックアイコンSVG（コピー完了時）
-  const checkIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+  /**
+   * チェックアイコンのSVG文字列
+   * @description コピー完了時に表示される成功状態のアイコン
+   */
+  const CHECK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
-  // コードブロックにヘッダーとコピーボタンを追加
-  function addCodeBlockHeaders() {
-    const codeBlocks = document.querySelectorAll('pre[data-language]')
+  /**
+   * コピー成功表示の持続時間（ミリ秒）
+   */
+  const COPY_SUCCESS_DURATION = 2000;
 
-    codeBlocks.forEach((block) => {
+  /**
+   * 言語名の表示用マッピング
+   * @description コードフェンスで指定される言語識別子を読みやすい表示名に変換
+   */
+  const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
+    js: 'JavaScript',
+    javascript: 'JavaScript',
+    ts: 'TypeScript',
+    typescript: 'TypeScript',
+    jsx: 'JSX',
+    tsx: 'TSX',
+    html: 'HTML',
+    css: 'CSS',
+    scss: 'SCSS',
+    sass: 'Sass',
+    less: 'Less',
+    json: 'JSON',
+    yaml: 'YAML',
+    yml: 'YAML',
+    xml: 'XML',
+    md: 'Markdown',
+    markdown: 'Markdown',
+    mdx: 'MDX',
+    py: 'Python',
+    python: 'Python',
+    rb: 'Ruby',
+    ruby: 'Ruby',
+    go: 'Go',
+    rust: 'Rust',
+    rs: 'Rust',
+    java: 'Java',
+    kotlin: 'Kotlin',
+    kt: 'Kotlin',
+    swift: 'Swift',
+    c: 'C',
+    cpp: 'C++',
+    'c++': 'C++',
+    cs: 'C#',
+    csharp: 'C#',
+    php: 'PHP',
+    sql: 'SQL',
+    graphql: 'GraphQL',
+    gql: 'GraphQL',
+    bash: 'Bash',
+    sh: 'Shell',
+    shell: 'Shell',
+    zsh: 'Zsh',
+    powershell: 'PowerShell',
+    ps1: 'PowerShell',
+    dockerfile: 'Dockerfile',
+    docker: 'Docker',
+    nginx: 'Nginx',
+    apache: 'Apache',
+    astro: 'Astro',
+    vue: 'Vue',
+    svelte: 'Svelte',
+    diff: 'Diff',
+    text: 'Text',
+    txt: 'Text',
+    plaintext: 'Plain Text',
+  };
+
+  /**
+   * 言語識別子を表示用の名前に変換
+   * @param lang - コードフェンスで指定された言語識別子
+   * @returns 表示用の言語名（マッピングにない場合は元の値を返す）
+   */
+  function getDisplayLanguage(lang: string): string {
+    return LANGUAGE_DISPLAY_NAMES[lang.toLowerCase()] || lang;
+  }
+
+  /**
+   * コピーボタンのクリックハンドラを作成
+   * @param codeElement - コードを含む要素
+   * @param button - コピーボタン要素
+   */
+  function createCopyHandler(
+    codeElement: Element,
+    button: HTMLButtonElement
+  ): () => Promise<void> {
+    return async () => {
+      try {
+        const text = codeElement.textContent || '';
+        await navigator.clipboard.writeText(text);
+
+        // 成功表示
+        button.innerHTML = CHECK_ICON_SVG;
+        button.classList.add('copied');
+        button.setAttribute('aria-label', 'コピーしました');
+
+        // 一定時間後に元の状態に戻す
+        setTimeout(() => {
+          button.innerHTML = COPY_ICON_SVG;
+          button.classList.remove('copied');
+          button.setAttribute('aria-label', 'コードをコピー');
+        }, COPY_SUCCESS_DURATION);
+      } catch (error) {
+        console.error('コードのコピーに失敗しました:', error);
+      }
+    };
+  }
+
+  /**
+   * コードブロックにヘッダーを追加
+   * @description ページ内の全コードブロックを検索し、ヘッダー（タイトル+コピーボタン）を追加する
+   */
+  function addCodeBlockHeaders(): void {
+    const codeBlocks = document.querySelectorAll<HTMLPreElement>('pre[data-language]');
+
+    for (const block of codeBlocks) {
       // 既にヘッダーが追加されている場合はスキップ
       if (block.querySelector('.code-header')) {
-        return
+        continue;
       }
 
-      const language = block.getAttribute('data-language')
-      const filename = block.getAttribute('data-filename')
+      const language = block.getAttribute('data-language');
+      const filename = block.getAttribute('data-filename');
 
-      // ヘッダーを作成
-      const header = document.createElement('div')
-      header.className = 'code-header'
+      // ヘッダー要素を作成
+      const header = document.createElement('div');
+      header.className = 'code-header';
 
-      // 言語・ファイル名テキスト
-      const titleSpan = document.createElement('span')
-      titleSpan.className = 'code-title'
+      // タイトル部分（ファイル名または言語名）
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'code-title';
+
+      // ファイル名が指定されている場合はファイル名を表示
+      // ない場合は言語名を表示
       if (filename) {
-        titleSpan.textContent = `${language} • ${filename}`
-      } else {
-        titleSpan.textContent = language
+        titleSpan.textContent = filename;
+        titleSpan.setAttribute('title', `${getDisplayLanguage(language || '')} - ${filename}`);
+      } else if (language) {
+        titleSpan.textContent = getDisplayLanguage(language);
       }
 
       // コピーボタンを作成
-      const button = document.createElement('button')
-      button.className = 'copy-button'
-      button.innerHTML = copyIconSVG
-      button.setAttribute('aria-label', 'コードをコピー')
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-button';
+      copyButton.type = 'button';
+      copyButton.innerHTML = COPY_ICON_SVG;
+      copyButton.setAttribute('aria-label', 'コードをコピー');
 
-      // クリックイベント
-      button.addEventListener('click', async () => {
-        const code = block.querySelector('code')
-        if (!code) return
-
-        try {
-          await navigator.clipboard.writeText(code.textContent || '')
-          button.innerHTML = checkIconSVG
-          button.classList.add('copied')
-
-          setTimeout(() => {
-            button.innerHTML = copyIconSVG
-            button.classList.remove('copied')
-          }, 2000)
-        } catch (err) {
-          console.error('コピーに失敗しました:', err)
-        }
-      })
+      // コード要素を取得してイベントハンドラを設定
+      const codeElement = block.querySelector('code');
+      if (codeElement) {
+        copyButton.addEventListener('click', createCopyHandler(codeElement, copyButton));
+      }
 
       // ヘッダーに要素を追加
-      header.appendChild(titleSpan)
-      header.appendChild(button)
+      header.appendChild(titleSpan);
+      header.appendChild(copyButton);
 
       // ブロックの先頭にヘッダーを挿入
-      block.insertBefore(header, block.firstChild)
-      block.style.position = 'relative'
-    })
+      block.insertBefore(header, block.firstChild);
+    }
   }
 
-  // ページロード時とビュー遷移時に実行
-  addCodeBlockHeaders()
-  document.addEventListener('astro:page-load', addCodeBlockHeaders)
+  // 初回ロード時に実行
+  addCodeBlockHeaders();
+
+  // Astroのビュー遷移時に再実行
+  document.addEventListener('astro:page-load', addCodeBlockHeaders);
 </script>
 
 <style is:global>
-  /* コードブロックヘッダー */
+  /**
+   * コードブロックヘッダー
+   * ファイル名/言語名とコピーボタンを横並びで表示
+   */
   .code-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
     padding: 0.5rem 1rem;
     background-color: rgba(128, 128, 128, 0.1);
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-    font-size: 0.875rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8125rem;
+    font-family: var(--font-mono, ui-monospace, 'JetBrains Mono', 'Fira Code', Consolas, monospace);
+    line-height: 1.4;
   }
 
-  /* 言語・ファイル名タイトル */
+  /**
+   * コードタイトル（ファイル名または言語名）
+   */
   .code-title {
     color: var(--color-text-sub);
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  /* コピーボタン */
+  /**
+   * コピーボタン
+   */
   .code-header .copy-button {
-    padding: 0.25rem 0.5rem;
-    background-color: transparent;
-    color: rgba(128, 128, 128, 0.6);
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0.25rem;
+    background-color: transparent;
+    color: var(--color-text-sub, rgba(128, 128, 128, 0.6));
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
   }
 
+  /**
+   * コピーボタン - ホバー状態
+   */
   .code-header .copy-button:hover {
     background-color: rgba(128, 128, 128, 0.15);
-    color: rgba(128, 128, 128, 0.9);
+    color: var(--color-text-main, rgba(128, 128, 128, 0.9));
   }
 
+  /**
+   * コピーボタン - フォーカス状態（キーボード操作時）
+   */
   .code-header .copy-button:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 
+  /**
+   * コピーボタン - コピー完了状態
+   */
   .code-header .copy-button.copied {
-    color: rgba(16, 185, 129, 0.8);
-  }
-
-  pre {
-    position: relative;
+    color: rgb(16, 185, 129);
   }
 </style>

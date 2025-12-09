@@ -1,5 +1,5 @@
-import { MarkdownRepository } from './markdown-repository'
 import type { ContentRepository } from './content-repository'
+import { MarkdownRepository } from './markdown-repository'
 
 // 環境変数で実装を切り替え可能（将来的にCMS対応）
 export const contentRepository: ContentRepository =
@@ -8,5 +8,5 @@ export const contentRepository: ContentRepository =
       new CMSRepository()
     : new MarkdownRepository()
 
-export type { ContentRepository } from './content-repository'
 export type { Post, TagWithCount } from '../types/content'
+export type { ContentRepository } from './content-repository'

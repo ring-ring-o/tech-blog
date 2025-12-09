@@ -9,9 +9,8 @@ interface Props {
 const { post } = Astro.props
 
 // 概要は150文字に制限
-const truncatedDescription = post.description.length > 150
-  ? post.description.slice(0, 150) + '...'
-  : post.description
+const truncatedDescription =
+  post.description.length > 150 ? `${post.description.slice(0, 150)}...` : post.description
 
 // 日付をフォーマット
 const formatDate = (date: Date) => {

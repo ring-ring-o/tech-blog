@@ -2,12 +2,12 @@
   "name": "tech-blog",
   "type": "module",
   "version": "0.0.1",
+  "description": "Astro + TypeScript + Tailwind CSS による技術ブログサイト",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && npx pagefind --site dist",
     "build:astro": "astro build",
     "preview": "astro preview",
-    "astro": "astro",
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "vitest",
@@ -15,16 +15,16 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "astro": "^5.14.1",
+    "astro": "^5.16.4",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.6.0",
-    "@biomejs/biome": "^2.2.5",
+    "@biomejs/biome": "^2.3.8",
     "@pagefind/default-ui": "^1.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitest/ui": "^3.2.4",
-    "happy-dom": "^19.0.2",
+    "happy-dom": "^20.0.10",
     "pagefind": "^1.4.0",
     "tailwindcss": "^4.1.14",
     "vitest": "^3.2.4"

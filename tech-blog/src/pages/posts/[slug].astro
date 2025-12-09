@@ -1,12 +1,12 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro'
-import TableOfContents from '../../components/article/TableOfContents.astro'
-import CodeCopyButton from '../../components/article/CodeCopyButton.astro'
+import { getEntry, render } from 'astro:content'
 import AdSlot from '../../components/ads/AdSlot.astro'
+import CodeCopyButton from '../../components/article/CodeCopyButton.astro'
+import TableOfContents from '../../components/article/TableOfContents.astro'
 import TagList from '../../components/article/TagList.astro'
 import Breadcrumb from '../../components/common/Breadcrumb.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
 import { contentRepository } from '../../lib/repositories'
-import { getEntry, render } from 'astro:content'
 
 export async function getStaticPaths() {
   const allPosts = await contentRepository.getAllPosts()

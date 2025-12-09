@@ -14,7 +14,7 @@
   --color-hover-bg: #ebebeb;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   /* ダークモードのカラーパレット */
   --color-bg: #0d0d0d;
   --color-card-bg: #1a1a1a;
@@ -29,8 +29,9 @@
 
 /* システムフォントスタック */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP',
-    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text-main);
 }
@@ -38,7 +39,7 @@ body {
 /* コード用フォント */
 code,
 pre {
-  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, Monaco, "Courier New", monospace;
 }
 
 /* フォーカスインジケーター */

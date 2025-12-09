@@ -1,7 +1,7 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'
-import Breadcrumb from '../components/common/Breadcrumb.astro'
 import { getEntry, render } from 'astro:content'
+import Breadcrumb from '../components/common/Breadcrumb.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
 
 const entry = await getEntry('pages', 'about')
 if (!entry) {
