@@ -55,22 +55,25 @@ export default defineConfig({
           /**
            * <pre>タグの変換処理
            * @description コードブロックのメタ情報からdata属性を抽出し、preタグに追加する
-           * @param {object} node - Shiki AST の pre ノード
            */
           pre(node) {
+            // @ts-expect-error - Shiki transformer context
             const meta = this.options.meta?.__raw
             if (!meta) return
+
+            // @ts-expect-error - Shiki AST node properties
+            const props = node.properties || {}
 
             // data-filename属性の抽出
             const filenameMatch = meta.match(/data-filename="([^"]+)"/)
             if (filenameMatch) {
-              node.properties['data-filename'] = filenameMatch[1]
+              props['data-filename'] = filenameMatch[1]
             }
 
             // data-language属性の抽出
             const languageMatch = meta.match(/data-language="([^"]+)"/)
             if (languageMatch) {
-              node.properties['data-language'] = languageMatch[1]
+              props['data-language'] = languageMatch[1]
             }
           },
         },

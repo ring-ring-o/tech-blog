@@ -5,7 +5,10 @@
   "description": "Astro + TypeScript + Tailwind CSS による技術ブログサイト",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npx pagefind --site dist",
+    "dev:demo": "CONTENT_MODE=demo astro dev",
+    "dev:prod": "CONTENT_MODE=production astro dev",
+    "build": "CONTENT_MODE=production astro build && npx pagefind --site dist",
+    "build:demo": "CONTENT_MODE=demo astro build && npx pagefind --site dist",
     "build:astro": "astro build",
     "preview": "astro preview",
     "lint": "biome check .",

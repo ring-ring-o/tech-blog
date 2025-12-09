@@ -8,6 +8,39 @@ import { defineCollection, z } from 'astro:content'
 import { glob } from 'astro/loaders'
 
 /**
+ * コンテンツモード
+ * @description 環境変数 CONTENT_MODE で切り替え可能
+ * - 'demo': デモ用ダミー記事を表示（デフォルト）
+ * - 'production': 本番用記事を表示
+ */
+const contentMode = import.meta.env.CONTENT_MODE || 'demo'
+
+/**
+ * ブログ記事のベースディレクトリ
+ * @description コンテンツモードに応じて切り替え
+ */
+const blogBase = contentMode === 'production' ? './src/content/blog' : './src/content/blog-demo'
+
+/**
+ * ブログ記事スキーマ
+ * @description 記事のフロントマター検証用
+ */
+const blogSchema = z.object({
+  /** 記事タイトル */
+  title: z.string().min(1).max(200),
+  /** 記事の概要・説明文 */
+  description: z.string().min(1).max(300),
+  /** 公開日（日付文字列から自動変換） */
+  publishedAt: z.coerce.date(),
+  /** 更新日（任意） */
+  updatedAt: z.coerce.date().optional(),
+  /** タグ一覧 */
+  tags: z.array(z.string()).min(1).max(10),
+  /** 下書きフラグ */
+  draft: z.boolean().default(false),
+})
+
+/**
  * ブログ記事コレクション
  * @description Markdownファイルから技術記事を読み込む
  *
@@ -21,23 +54,21 @@ import { glob } from 'astro/loaders'
  * オプションフィールド:
  * - updatedAt: 更新日
  * - draft: 下書きフラグ（デフォルト: false）
+ *
+ * @example
+ * デモモード（デフォルト）:
+ * ```bash
+ * pnpm dev
+ * ```
+ *
+ * 本番モード:
+ * ```bash
+ * CONTENT_MODE=production pnpm dev
+ * ```
  */
 const blog = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
-  schema: z.object({
-    /** 記事タイトル */
-    title: z.string().min(1).max(200),
-    /** 記事の概要・説明文 */
-    description: z.string().min(1).max(300),
-    /** 公開日（日付文字列から自動変換） */
-    publishedAt: z.coerce.date(),
-    /** 更新日（任意） */
-    updatedAt: z.coerce.date().optional(),
-    /** タグ一覧 */
-    tags: z.array(z.string()).min(1).max(10),
-    /** 下書きフラグ */
-    draft: z.boolean().default(false),
-  }),
+  loader: glob({ pattern: '**/*.md', base: blogBase }),
+  schema: blogSchema,
 })
 
 /**
