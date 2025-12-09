@@ -114,11 +114,13 @@ pnpm preview
 
 ## 📝 ドキュメント
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - 記事の投稿・編集方法
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - デプロイ手順
-- [ADVERTISING.md](./ADVERTISING.md) - 広告配置ガイド
-- [IMAGE_OPTIMIZATION.md](./IMAGE_OPTIMIZATION.md) - 画像最適化ガイド
-- [PERFORMANCE.md](./PERFORMANCE.md) - パフォーマンス最適化ガイド
+詳細なドキュメントは [docs/tech-blog/](./docs/tech-blog/) に格納されています。
+
+- [WRITING_GUIDE.md](./docs/tech-blog/WRITING_GUIDE.md) - 記事の書き方・記法ガイド
+- [DEPLOYMENT.md](./docs/tech-blog/DEPLOYMENT.md) - デプロイ手順
+- [ADVERTISING.md](./docs/tech-blog/ADVERTISING.md) - 広告配置ガイド
+- [IMAGE_OPTIMIZATION.md](./docs/tech-blog/IMAGE_OPTIMIZATION.md) - 画像最適化ガイド
+- [PERFORMANCE.md](./docs/tech-blog/PERFORMANCE.md) - パフォーマンス最適化ガイド
 
 ## 🎯 コマンド一覧
 
@@ -168,24 +170,3 @@ PUBLIC_ENABLE_ADS=false
   - FID < 100ms
   - CLS < 0.1
 
-## 🤝 コントリビューション
-
-記事の投稿や機能改善のプルリクエストを歓迎します。
-詳細は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
-
-## 📄 ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
-
-## 📞 サポート
-
-質問や問題がある場合は、以下の方法でお問い合わせください：
-
-- GitHubで[Issueを作成](https://github.com/yourusername/tech-blog/issues)
-- Email: tech-blog@example.com
-
-## 🔗 リンク
-
-- [公式サイト](https://example.com)
-- [Astro ドキュメント](https://docs.astro.build)
-- [Tailwind CSS ドキュメント](https://tailwindcss.com/docs)
