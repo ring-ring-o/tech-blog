@@ -1,9 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 128 128">
-    <path d="M50.4 78.5a75.1 75.1 0 0 0-28.5 6.9l24.2-65.7c.7-2 1.9-3.2 3.4-3.2h29c1.5 0 2.7 1.2 3.4 3.2l24.2 65.7s-11.6-7-28.5-7L67 45.5c-.4-1.7-1.6-2.8-2.9-2.8-1.3 0-2.5 1.1-2.9 2.7L50.4 78.5Zm-1.1 28.2Zm-4.2-20.2c-2 6.6-.6 15.8 4.2 20.2a17.5 17.5 0 0 1 .2-.7 5.5 5.5 0 0 1 5.7-4.5c2.8.1 4.3 1.5 4.7 4.7.2 1.1.2 2.3.2 3.5v.4c0 2.7.7 5.2 2.2 7.4a13 13 0 0 0 5.7 4.9v-.3l-.2-.3c-1.8-5.6-.5-9.5 4.4-12.8l1.5-1a73 73 0 0 0 3.2-2.2 16 16 0 0 0 6.8-11.4c.3-2 .1-4-.6-6l-.8.6-1.6 1a37 37 0 0 1-22.4 2.7c-5-.7-9.7-2-13.2-6.2Z" />
+    <!-- Laptop screen frame -->
+    <rect x="24" y="20" width="80" height="56" rx="4" />
+    <!-- Screen inner (cut out) -->
+    <rect x="30" y="26" width="68" height="44" rx="2" fill="white" />
+    <!-- Stylized T with code brackets -->
+    <path d="M42 36 L44 38 L44 42 L42 44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M86 36 L84 38 L84 42 L86 44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M42 58 L44 56 L44 52 L42 50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M86 58 L84 56 L84 52 L86 50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Letter T with serifs -->
+    <path d="M50 38 L50 36 L78 36 L78 38 L67 38 L67 58 L70 58 L70 60 L58 60 L58 58 L61 58 L61 38 L50 38 Z" />
+    <!-- Screen reflection highlight -->
+    <path d="M32 28 L36 28 L32 34 Z" fill="white" opacity="0.5" />
+    <!-- Laptop keyboard (angled trapezoid) -->
+    <path d="M16 92 L24 80 L104 80 L112 92 Z" />
+    <!-- Keyboard keys (white lines on black) -->
+    <g class="keys" fill="none" stroke-width="1">
+        <!-- Top row keys -->
+        <line x1="32" y1="83" x2="40" y2="83" />
+        <line x1="44" y1="83" x2="52" y2="83" />
+        <line x1="56" y1="83" x2="64" y2="83" />
+        <line x1="68" y1="83" x2="76" y2="83" />
+        <line x1="80" y1="83" x2="88" y2="83" />
+        <line x1="92" y1="83" x2="98" y2="83" />
+        <!-- Bottom row keys -->
+        <line x1="28" y1="88" x2="38" y2="88" />
+        <line x1="42" y1="88" x2="54" y2="88" />
+        <line x1="58" y1="88" x2="70" y2="88" />
+        <line x1="74" y1="88" x2="86" y2="88" />
+        <line x1="90" y1="88" x2="100" y2="88" />
+    </g>
     <style>
-        path { fill: #000; }
+        rect, path { fill: #000; stroke: #000; }
+        rect[fill="white"], path[fill="white"] { fill: #FFF; stroke: none; }
+        .keys line { stroke: #FFF; }
         @media (prefers-color-scheme: dark) {
-            path { fill: #FFF; }
+            rect, path { fill: #FFF; stroke: #FFF; }
+            rect[fill="white"], path[fill="white"] { fill: #000; stroke: none; }
+            .keys line { stroke: #000; }
         }
     </style>
 </svg>
