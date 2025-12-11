@@ -1,0 +1,81 @@
+---
+import { getEntry, render } from 'astro:content'
+import Breadcrumb from '../components/common/Breadcrumb.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+const entry = await getEntry('pages', 'contact')
+if (!entry) {
+  throw new Error('Contact page not found')
+}
+const { Content } = await render(entry)
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.description}>
+  <article class="max-w-5xl mx-auto prose prose-lg">
+    <Breadcrumb
+      items={[
+        { label: 'ホーム', href: '/' },
+        { label: 'お問い合わせ' }
+      ]}
+    />
+    <Content />
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .prose h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--color-text-main);
+  }
+
+  .prose h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+    color: var(--color-text-main);
+  }
+
+  .prose h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--color-text-main);
+  }
+
+  .prose p {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+    color: var(--color-text-main);
+  }
+
+  .prose ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    margin-bottom: 1rem;
+  }
+
+  .prose li {
+    margin-bottom: 0.5rem;
+    color: var(--color-text-main);
+  }
+
+  .prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .prose a:hover {
+    opacity: 0.8;
+  }
+
+  .prose strong {
+    font-weight: 700;
+    color: var(--color-text-main);
+  }
+</style>
