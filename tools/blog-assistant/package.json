@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
+    "dev": "concurrently \"pnpm dev:server --host 0.0.0.0\" \"pnpm dev:client --host 0.0.0.0\"",
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite client",
     "build": "pnpm build:client",
