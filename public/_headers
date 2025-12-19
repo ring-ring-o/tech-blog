@@ -1,0 +1,23 @@
+# セキュリティヘッダー（全ページ）
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: document-domain=()
+
+# Pagefind検索インデックス（長期キャッシュ）
+/pagefind/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Astroビルドアセット（長期キャッシュ）
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 画像ファイル（長期キャッシュ）
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# フォントファイル（長期キャッシュ）
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

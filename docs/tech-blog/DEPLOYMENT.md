@@ -1,211 +1,124 @@
 # デプロイメントガイド
 
-このドキュメントでは、Tech Blogを本番環境にデプロイする手順を説明します。
+このドキュメントでは、Tech Blog を Cloudflare Pages にデプロイする手順を説明します。
 
 ## 📋 前提条件
 
 - Git リポジトリが設定されている
-- Node.js 20.x以上がインストールされている
-- pnpm 8.x以上がインストールされている
-- Vercel または Netlify のアカウントを持っている
+- Node.js 20.x 以上がインストールされている
+- pnpm 8.x 以上がインストールされている
+- Cloudflare アカウントを持っている
 
 ## 🚀 デプロイ方法
 
-### Vercel でのデプロイ
+### Cloudflare Pages でのデプロイ
 
-#### 1. Vercel CLI を使用したデプロイ
+#### 1. Cloudflare ダッシュボードからのデプロイ（推奨）
+
+1. [Cloudflare ダッシュボード](https://dash.cloudflare.com) にログイン
+2. 左メニューから「Compute (Workers)」→「Workers & Pages」を選択
+3. 「Create」→「Pages」タブをクリック
+4. 「Connect to Git」で GitHub リポジトリを選択
+5. ビルド設定を入力：
+
+```
+Framework preset: Astro
+Build command: pnpm build
+Build output directory: dist
+```
+
+6. 環境変数を設定（後述）
+7. 「Save and Deploy」をクリック
+
+#### 2. Wrangler CLI を使用したデプロイ
 
 ```bash
-# Vercel CLIのインストール
-pnpm add -g vercel
+# Wrangler CLIのインストール
+pnpm add -g wrangler
 
-# プロジェクトルートでログイン
-vercel login
+# Cloudflareにログイン
+wrangler login
 
-# 初回デプロイ
-vercel
+# ローカルでプレビュー
+pnpm build && wrangler pages dev ./dist
 
 # 本番環境へデプロイ
-vercel --prod
+pnpm build && wrangler pages deploy ./dist
 ```
 
-#### 2. Vercel ダッシュボードからのデプロイ
+#### 3. 設定ファイル
 
-1. [Vercel](https://vercel.com) にログイン
-2. 「New Project」をクリック
-3. GitHubリポジトリを選択
-4. プロジェクト設定を入力：
+##### wrangler.jsonc
 
-```
-Framework Preset: Astro
-Build Command: pnpm build && npx pagefind --site dist
-Output Directory: dist
-Install Command: pnpm install
-```
+プロジェクトルートに配置済み：
 
-5. 環境変数を設定（後述）
-6. 「Deploy」をクリック
-
-#### 3. Vercel 設定ファイル
-
-プロジェクトルートに `vercel.json` を配置（オプション）：
-
-```json
+```jsonc
 {
-  "buildCommand": "pnpm build && npx pagefind --site dist",
-  "outputDirectory": "dist",
-  "installCommand": "pnpm install",
-  "devCommand": "pnpm dev",
-  "framework": "astro",
-  "regions": ["hnd1"],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    },
-    {
-      "source": "/pagefind/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
-  ]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tech-blog",
+  "compatibility_date": "2025-01-01",
+  "pages_build_output_dir": "./dist"
 }
 ```
 
-### Netlify でのデプロイ
+##### public/\_headers
 
-#### 1. Netlify CLI を使用したデプロイ
+セキュリティヘッダーとキャッシュ設定：
 
-```bash
-# Netlify CLIのインストール
-pnpm add -g netlify-cli
+```txt
+# セキュリティヘッダー（全ページ）
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
 
-# ログイン
-netlify login
+# Pagefind検索インデックス（長期キャッシュ）
+/pagefind/*
+  Cache-Control: public, max-age=31536000, immutable
 
-# 初回デプロイ
-netlify init
-
-# 本番環境へデプロイ
-netlify deploy --prod
+# Astroビルドアセット（長期キャッシュ）
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
 ```
 
-#### 2. Netlify ダッシュボードからのデプロイ
+##### public/\_redirects
 
-1. [Netlify](https://www.netlify.com) にログイン
-2. 「Add new site」→「Import an existing project」
-3. GitHubリポジトリを選択
-4. ビルド設定を入力：
+404 ページへのフォールバック：
 
-```
-Build command: pnpm build && npx pagefind --site dist
-Publish directory: dist
-```
-
-5. 環境変数を設定（後述）
-6. 「Deploy site」をクリック
-
-#### 3. Netlify 設定ファイル
-
-プロジェクトルートに `netlify.toml` を配置：
-
-```toml
-[build]
-  command = "pnpm build && npx pagefind --site dist"
-  publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "20"
-  NPM_FLAGS = "--version"
-
-[[redirects]]
-  from = "/*"
-  to = "/404"
-  status = 404
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[headers]]
-  for = "/pagefind/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.css"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+```txt
+/* /404.html 404
 ```
 
 ## 🔧 環境変数の設定
 
 ### 必須の環境変数
 
-| 変数名 | 説明 | 例 |
-|--------|------|-----|
-| `PUBLIC_SITE_URL` | サイトのURL | `https://yourblog.com` |
+| 変数名            | 説明         | 例                           |
+| ----------------- | ------------ | ---------------------------- |
+| `PUBLIC_SITE_URL` | サイトの URL | `https://yourblog.pages.dev` |
 
 ### オプションの環境変数
 
-| 変数名 | 説明 | デフォルト |
-|--------|------|-----------|
-| `PUBLIC_ENABLE_ADS` | 広告表示の有効化 | `false` |
-| `PUBLIC_GA_TRACKING_ID` | Google Analytics ID | - |
+| 変数名                  | 説明                | デフォルト |
+| ----------------------- | ------------------- | ---------- |
+| `PUBLIC_ENABLE_ADS`     | 広告表示の有効化    | `false`    |
+| `PUBLIC_GA_TRACKING_ID` | Google Analytics ID | -          |
 
-### Vercel での環境変数設定
+### Cloudflare での環境変数設定
 
-1. Vercelプロジェクトダッシュボードを開く
-2. 「Settings」→「Environment Variables」
-3. 以下を追加：
-
-```
-PUBLIC_SITE_URL = https://your-domain.vercel.app
-PUBLIC_ENABLE_ADS = false
-```
-
-4. Environment を選択（Production / Preview / Development）
-5. 「Save」をクリック
-
-### Netlify での環境変数設定
-
-1. Netlifyサイトダッシュボードを開く
-2. 「Site settings」→「Build & deploy」→「Environment」
-3. 「Edit variables」をクリック
+1. Cloudflare ダッシュボードでプロジェクトを開く
+2. 「Settings」→「Environment variables」
+3. 「Add variable」をクリック
 4. 以下を追加：
 
 ```
-PUBLIC_SITE_URL = https://your-domain.netlify.app
+PUBLIC_SITE_URL = https://your-domain.pages.dev
 PUBLIC_ENABLE_ADS = false
 ```
 
-5. 「Save」をクリック
+5. Environment を選択（Production / Preview）
+6. 「Save」をクリック
 
 ### ローカル環境変数
 
@@ -217,49 +130,36 @@ PUBLIC_SITE_URL=http://localhost:4321
 PUBLIC_ENABLE_ADS=false
 ```
 
-**注意**: `.env.local` は `.gitignore` に含まれており、Git管理されません。
+**注意**: `.env.local` は `.gitignore` に含まれており、Git 管理されません。
 
 ## 🔄 自動デプロイの設定
 
 ### GitHub 連携
 
-#### Vercel
-
-1. Vercelプロジェクトの「Settings」→「Git」
-2. GitHub リポジトリと連携
-3. 「Production Branch」を設定（通常は `main` または `master`）
-4. プルリクエストごとにプレビューデプロイが自動作成されます
-
-#### Netlify
-
-1. Netlifyサイトの「Site settings」→「Build & deploy」→「Continuous Deployment」
-2. 「Branch deploys」で本番ブランチを設定
-3. 「Deploy contexts」でプレビュー設定を調整
+1. Cloudflare Pages プロジェクトの「Settings」→「Builds & deployments」
+2. 「Production branch」を設定（通常は `main` または `master`）
+3. プルリクエストごとにプレビューデプロイが自動作成されます
 
 ### デプロイフック
 
 特定のイベントで手動デプロイをトリガーする場合：
 
-#### Vercel Deploy Hook
-
-1. 「Settings」→「Git」→「Deploy Hooks」
-2. フック名とブランチを入力
-3. URLをコピーして、以下のように使用：
-
-```bash
-curl -X POST https://api.vercel.com/v1/integrations/deploy/...
-```
-
-#### Netlify Deploy Hook
-
-1. 「Site settings」→「Build & deploy」→「Build hooks」
-2. 「Add build hook」をクリック
-3. フック名とブランチを入力
-4. URLをコピーして使用：
+1. 「Settings」→「Builds & deployments」→「Deploy hooks」
+2. 「Add deploy hook」をクリック
+3. フック名を入力
+4. URL をコピーして、以下のように使用：
 
 ```bash
-curl -X POST -d {} https://api.netlify.com/build_hooks/...
+curl -X POST https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/...
 ```
+
+## 🌐 カスタムドメインの設定
+
+1. Cloudflare Pages プロジェクトの「Custom domains」タブ
+2. 「Set up a custom domain」をクリック
+3. ドメイン名を入力
+4. DNS 設定を確認（Cloudflare DNS を使用している場合は自動設定）
+5. SSL 証明書は自動的にプロビジョニングされます
 
 ## 🧪 デプロイ前チェックリスト
 
@@ -272,7 +172,7 @@ curl -X POST -d {} https://api.netlify.com/build_hooks/...
 - [ ] Pagefind インデックスが生成される
 - [ ] 画像が最適化されている
 - [ ] 環境変数が正しく設定されている
-- [ ] `PUBLIC_SITE_URL` が本番URLに設定されている
+- [ ] `PUBLIC_SITE_URL` が本番 URL に設定されている
 - [ ] `.env` ファイルが `.gitignore` に含まれている
 
 ## 📊 デプロイ後の確認
@@ -294,16 +194,17 @@ curl -X POST -d {} https://api.netlify.com/build_hooks/...
 # Lighthouse CLI でテスト
 pnpm add -g lighthouse
 
-lighthouse https://your-domain.com --view
+lighthouse https://your-domain.pages.dev --view
 ```
 
 目標スコア：
+
 - Performance: 95+
 - Accessibility: 95+
 - Best Practices: 95+
 - SEO: 95+
 
-### SEO確認
+### SEO 確認
 
 - [ ] `robots.txt` が正しく配信される
 - [ ] `sitemap.xml` が生成される
@@ -322,8 +223,9 @@ Error: Command "pnpm build" exited with 1
 ```
 
 **解決策**:
+
 1. ローカルで `pnpm build` を実行し、エラーを確認
-2. Node.js バージョンを確認（20.x以上必要）
+2. Node.js バージョンを確認（20.x 以上必要）
 3. `pnpm install` で依存関係を再インストール
 
 ### Pagefind が見つからない
@@ -331,15 +233,17 @@ Error: Command "pnpm build" exited with 1
 **症状**: 検索機能が動作しない
 
 **解決策**:
+
 1. ビルドコマンドに `npx pagefind --site dist` が含まれているか確認
 2. デプロイログで Pagefind 実行を確認
 3. `/pagefind/` ディレクトリが dist に生成されているか確認
 
 ### 環境変数が反映されない
 
-**症状**: 広告が表示されない、サイトURLが間違っている
+**症状**: 広告が表示されない、サイト URL が間違っている
 
 **解決策**:
+
 1. 環境変数名に `PUBLIC_` プレフィックスがあるか確認
 2. デプロイ環境（Production/Preview）が正しいか確認
 3. 設定後に再デプロイを実行
@@ -349,28 +253,34 @@ Error: Command "pnpm build" exited with 1
 **症状**: スタイルが適用されない
 
 **解決策**:
+
 1. `astro.config.mjs` の `base` 設定を確認
 2. Tailwind CSS ビルドが成功しているか確認
-3. ブラウザのコンソールでCSSファイルのパスを確認
+3. ブラウザのコンソールで CSS ファイルのパスを確認
+
+### \_headers が適用されない
+
+**症状**: セキュリティヘッダーが設定されていない
+
+**解決策**:
+
+1. `public/_headers` ファイルが存在するか確認
+2. ファイル形式が正しいか確認（インデントはスペース 2 つ）
+3. ビルド後に `dist/_headers` が生成されているか確認
 
 ## 📈 継続的改善
 
 ### パフォーマンス監視
 
-定期的にLighthouse監査を実行：
+Cloudflare Web Analytics を有効化：
 
-```bash
-# package.json にスクリプト追加
-{
-  "scripts": {
-    "lighthouse": "lighthouse https://your-domain.com --output html --output-path ./lighthouse-report.html"
-  }
-}
-```
+1. Cloudflare ダッシュボードで「Analytics & Logs」→「Web Analytics」
+2. 「Add a site」でサイトを追加
+3. スニペットをサイトに追加（または自動有効化）
 
 ### エラー監視
 
-Sentryなどのエラー監視サービスを統合（オプション）：
+Sentry などのエラー監視サービスを統合（オプション）：
 
 ```bash
 pnpm add @sentry/astro
@@ -378,21 +288,15 @@ pnpm add @sentry/astro
 
 ### アナリティクス
 
-Google Analyticsを設定（オプション）：
+Google Analytics を設定（オプション）：
 
 1. 環境変数に `PUBLIC_GA_TRACKING_ID` を追加
 2. `src/layouts/BaseLayout.astro` でスクリプトを読み込み
 
 ## 🔗 関連リソース
 
-- [Vercel ドキュメント](https://vercel.com/docs)
-- [Netlify ドキュメント](https://docs.netlify.com)
-- [Astro デプロイガイド](https://docs.astro.build/en/guides/deploy)
+- [Cloudflare Pages ドキュメント](https://developers.cloudflare.com/pages)
+- [Astro + Cloudflare Pages ガイド](https://developers.cloudflare.com/pages/framework-guides/deploy-an-astro-site/)
+- [Astro デプロイガイド](https://docs.astro.build/en/guides/deploy/cloudflare/)
 - [Pagefind ドキュメント](https://pagefind.app/docs)
-
-## 📞 サポート
-
-デプロイに関する質問は以下へ：
-
-- GitHub Issues: [yourusername/tech-blog/issues](https://github.com/yourusername/tech-blog/issues)
-- Email: tech-blog@example.com
+- [Wrangler CLI ドキュメント](https://developers.cloudflare.com/workers/wrangler/)
