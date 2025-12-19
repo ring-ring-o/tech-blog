@@ -23,7 +23,8 @@
 - **Search**: [Pagefind](https://pagefind.app)
 - **Package Manager**: pnpm
 - **Linter/Formatter**: [Biome](https://biomejs.dev)
-- **Deployment**: Vercel / Netlify
+- **Deployment**: Cloudflare Pages
+- **AI Assistant**: Claude Agent SDK
 
 ## 📋 前提条件
 
@@ -116,11 +117,12 @@ pnpm preview
 
 詳細なドキュメントは [docs/tech-blog/](./docs/tech-blog/) に格納されています。
 
-- [WRITING_GUIDE.md](../docs/tech-blog/WRITING_GUIDE.md) - 記事の書き方・記法ガイド
-- [DEPLOYMENT.md](../docs/tech-blog/DEPLOYMENT.md) - デプロイ手順
-- [ADVERTISING.md](../docs/tech-blog/ADVERTISING.md) - 広告配置ガイド
-- [IMAGE_OPTIMIZATION.md](../docs/tech-blog/IMAGE_OPTIMIZATION.md) - 画像最適化ガイド
-- [PERFORMANCE.md](../docs/tech-blog/PERFORMANCE.md) - パフォーマンス最適化ガイド
+- [WRITING_GUIDE.md](./docs/tech-blog/WRITING_GUIDE.md) - 記事の書き方・記法ガイド
+- [DEPLOYMENT.md](./docs/tech-blog/DEPLOYMENT.md) - デプロイ手順（Cloudflare Pages）
+- [BLOG_ASSISTANT.md](./docs/tech-blog/BLOG_ASSISTANT.md) - AI 記事作成補助ツール
+- [ADVERTISING.md](./docs/tech-blog/ADVERTISING.md) - 広告配置ガイド
+- [IMAGE_OPTIMIZATION.md](./docs/tech-blog/IMAGE_OPTIMIZATION.md) - 画像最適化ガイド
+- [PERFORMANCE.md](./docs/tech-blog/PERFORMANCE.md) - パフォーマンス最適化ガイド
 
 ## 🎯 コマンド一覧
 
@@ -169,3 +171,34 @@ PUBLIC_ENABLE_ADS=false
   - LCP < 2.5s
   - FID < 100ms
   - CLS < 0.1
+
+## 🤖 Blog Assistant（記事作成補助ツール）
+
+Claude Agent SDK を使用した AI 記事作成補助ツールが `tools/blog-assistant/` に含まれています。
+
+### 主な機能
+
+- **AI 校閲**: 文法・表記チェック、技術的正確性、SEO 最適化の提案
+- **下書き生成**: トピックから記事の下書きを自動生成
+- **リアルタイムプレビュー**: Markdown プレビューと Astro サイトプレビュー
+- **記事保存**: `src/content/blog/` への直接出力
+
+### クイックスタート
+
+```bash
+# Blog Assistant を起動
+cd tools/blog-assistant
+pnpm install
+pnpm dev
+# → クライアント: http://localhost:5173
+# → サーバー: http://localhost:3001
+
+# 別ターミナルで Astro を起動（プレビュー連携用）
+cd /workspace
+CONTENT_MODE=production pnpm dev
+# → http://localhost:4321
+```
+
+### 詳細ドキュメント
+
+- [BLOG_ASSISTANT.md](./docs/tech-blog/BLOG_ASSISTANT.md) - 使い方・機能詳細
