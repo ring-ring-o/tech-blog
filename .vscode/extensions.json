@@ -1,8 +1,10 @@
 {
   "recommendations": [
+    "astro-build.astro-vscode",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "ms-vscode-remote.remote-containers",
     "eamodio.gitlens"
-  ]
+  ],
+  "unwantedRecommendations": []
 }
