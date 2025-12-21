@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Editor } from './components/Editor'
 import { FrontmatterForm } from './components/FrontmatterForm'
 import { Preview } from './components/Preview'
@@ -26,10 +26,50 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('preview')
   const [generateTopic, setGenerateTopic] = useState('')
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
+  const [leftPanelWidth, setLeftPanelWidth] = useState(50) // パーセント
+  const [isResizing, setIsResizing] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
   const { save, isSaving, savedUrl, savedFilename, savedSlug } = useArticle()
+
+  // リサイズ処理
+  const handleMouseDown = useCallback(() => {
+    setIsResizing(true)
+  }, [])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !containerRef.current) return
+
+      const containerRect = containerRef.current.getBoundingClientRect()
+      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
+
+      // 最小20%、最大80%に制限
+      if (newWidth >= 20 && newWidth <= 80) {
+        setLeftPanelWidth(newWidth)
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+    }
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing])
 
   const handleReview = useCallback(async () => {
     setActiveTab('review')
@@ -142,9 +182,12 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div ref={containerRef} className="flex-1 flex overflow-hidden">
         {/* Left Panel: Editor */}
-        <div className="w-1/2 flex flex-col border-r bg-white">
+        <div
+          className="flex flex-col border-r bg-white"
+          style={{ width: `${leftPanelWidth}%` }}
+        >
           {/* Frontmatter Form */}
           <div className="border-b p-4">
             <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
@@ -184,8 +227,18 @@ export default function App() {
           </div>
         </div>
 
+        {/* Resizer */}
+        <div
+          className="w-1 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors flex-shrink-0"
+          onMouseDown={handleMouseDown}
+          style={{ backgroundColor: isResizing ? '#3b82f6' : undefined }}
+        />
+
         {/* Right Panel: Preview/Review/Generate/Astro */}
-        <div className="w-1/2 flex flex-col bg-white">
+        <div
+          className="flex flex-col bg-white"
+          style={{ width: `${100 - leftPanelWidth}%` }}
+        >
           {/* Tabs */}
           <div className="border-b flex">
             <button
