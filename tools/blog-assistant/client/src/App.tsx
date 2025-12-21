@@ -39,6 +39,9 @@ export default function App() {
   const [saveDirectory, setSaveDirectory] = useState<BlogDirectory>('blog')
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
 
+  // UI状態
+  const [isFrontmatterCollapsed, setIsFrontmatterCollapsed] = useState(false)
+
   // スキル実行状態
   const [executingSkill, setExecutingSkill] = useState<Skill | null>(null)
   const [editorSelection, setEditorSelection] = useState('')
@@ -353,13 +356,50 @@ export default function App() {
           className="flex flex-col border-r bg-white flex-shrink-0"
           style={{ width: `${leftPanelWidth}%` }}
         >
-          {/* Frontmatter Form */}
-          <div className="border-b p-4">
-            <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
+          {/* Frontmatter Form (Collapsible) */}
+          <div className="border-b">
+            <button
+              onClick={() => setIsFrontmatterCollapsed(!isFrontmatterCollapsed)}
+              className="w-full px-4 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <svg
+                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                    isFrontmatterCollapsed ? '' : 'rotate-90'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">
+                  メタ情報
+                </span>
+                {isFrontmatterCollapsed && frontmatter.title && (
+                  <span className="text-sm text-gray-500 truncate max-w-[200px]">
+                    - {frontmatter.title}
+                  </span>
+                )}
+              </div>
+              {!isFrontmatterCollapsed && (
+                <span className="text-xs text-gray-400">クリックで折りたたむ</span>
+              )}
+            </button>
+            {!isFrontmatterCollapsed && (
+              <div className="p-4">
+                <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
+              </div>
+            )}
           </div>
 
           {/* Editor */}
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 overflow-auto">
             <Editor value={content} onChange={setContent} />
           </div>
 
