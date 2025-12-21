@@ -1,16 +1,41 @@
-import { useRef, useCallback, useState, DragEvent, ClipboardEvent } from 'react'
+import { useRef, useCallback, useState, useEffect, DragEvent, ClipboardEvent, KeyboardEvent } from 'react'
 import { useImageUpload } from '../hooks/useImageUpload'
+import { EditorCommandMenu } from './EditorCommandMenu'
+import { EditorSelectionPopup } from './EditorSelectionPopup'
+import type { Skill } from '@shared/types'
 
 interface EditorProps {
   value: string
   onChange: (value: string) => void
+  skills?: Skill[]
+  onExecuteSkill?: (skill: Skill, selection: string) => void
+  onReview?: () => void
+  onGenerateDraft?: () => void
 }
 
-export function Editor({ value, onChange }: EditorProps) {
+export function Editor({
+  value,
+  onChange,
+  skills = [],
+  onExecuteSkill,
+  onReview,
+  onGenerateDraft,
+}: EditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { uploadFile, uploadBase64, isUploading, error } = useImageUpload()
   const [isDragging, setIsDragging] = useState(false)
+
+  // コマンドメニュー状態
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false)
+  const [commandMenuPosition, setCommandMenuPosition] = useState({ x: 0, y: 0 })
+  const [commandFilter, setCommandFilter] = useState('')
+  const [slashPosition, setSlashPosition] = useState<number | null>(null)
+
+  // 選択ポップアップ状態
+  const [selectionPopupOpen, setSelectionPopupOpen] = useState(false)
+  const [selectionPopupPosition, setSelectionPopupPosition] = useState({ x: 0, y: 0 })
+  const [currentSelection, setCurrentSelection] = useState('')
 
   // カーソル位置にテキストを挿入
   const insertAtCursor = useCallback(
@@ -26,7 +51,6 @@ export function Editor({ value, onChange }: EditorProps) {
       const newValue = value.substring(0, start) + text + value.substring(end)
       onChange(newValue)
 
-      // カーソル位置を更新
       requestAnimationFrame(() => {
         textarea.selectionStart = textarea.selectionEnd = start + text.length
         textarea.focus()
@@ -38,7 +62,6 @@ export function Editor({ value, onChange }: EditorProps) {
   // 画像をアップロードしてMarkdownを挿入
   const handleImageUpload = useCallback(
     async (file: File) => {
-      // 画像ファイルのみ受け付け
       if (!file.type.startsWith('image/')) {
         return
       }
@@ -49,17 +72,6 @@ export function Editor({ value, onChange }: EditorProps) {
       }
     },
     [uploadFile, insertAtCursor]
-  )
-
-  // Base64画像をアップロード
-  const handleBase64Upload = useCallback(
-    async (dataUrl: string) => {
-      const result = await uploadBase64(dataUrl)
-      if (result) {
-        insertAtCursor(`\n${result.markdown}\n`)
-      }
-    },
-    [uploadBase64, insertAtCursor]
   )
 
   // クリップボードからの貼り付け
@@ -82,21 +94,19 @@ export function Editor({ value, onChange }: EditorProps) {
     [handleImageUpload]
   )
 
-  // ドラッグオーバー
+  // ドラッグ&ドロップ
   const handleDragOver = useCallback((e: DragEvent<HTMLTextAreaElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(true)
   }, [])
 
-  // ドラッグリーブ
   const handleDragLeave = useCallback((e: DragEvent<HTMLTextAreaElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
   }, [])
 
-  // ドロップ
   const handleDrop = useCallback(
     async (e: DragEvent<HTMLTextAreaElement>) => {
       e.preventDefault()
@@ -124,54 +134,212 @@ export function Editor({ value, onChange }: EditorProps) {
       for (const file of files) {
         await handleImageUpload(file)
       }
-
-      // 入力をリセット
       e.target.value = ''
     },
     [handleImageUpload]
   )
 
-  // ファイル選択ボタンをクリック
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
 
+  // キー入力ハンドラ（スラッシュコマンド検出）
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+
+      // コマンドメニューが開いている場合は閉じる処理
+      if (commandMenuOpen) {
+        if (e.key === 'Escape' || e.key === 'Backspace') {
+          if (e.key === 'Backspace' && commandFilter.length > 0) {
+            // フィルターを削除
+            setCommandFilter((prev) => prev.slice(0, -1))
+          } else if (e.key === 'Backspace' && commandFilter.length === 0) {
+            // /も削除してメニューを閉じる
+            setCommandMenuOpen(false)
+            setSlashPosition(null)
+          }
+        }
+        return
+      }
+
+      // /キーでコマンドメニューを開く
+      if (e.key === '/' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        const cursorPos = textarea.selectionStart
+        // 行頭または空白の後のみ
+        const prevChar = value[cursorPos - 1]
+        if (cursorPos === 0 || prevChar === '\n' || prevChar === ' ') {
+          // カーソル位置を取得
+          const rect = textarea.getBoundingClientRect()
+          const lineHeight = 20
+          const lines = value.substring(0, cursorPos).split('\n')
+          const currentLine = lines.length - 1
+          const y = rect.top + currentLine * lineHeight + 30
+
+          setCommandMenuPosition({ x: rect.left + 16, y: Math.min(y, window.innerHeight - 320) })
+          setSlashPosition(cursorPos)
+          setCommandFilter('')
+
+          // 次のフレームでメニューを開く（入力後）
+          requestAnimationFrame(() => {
+            setCommandMenuOpen(true)
+          })
+        }
+      }
+    },
+    [commandMenuOpen, commandFilter, value]
+  )
+
+  // 入力ハンドラ
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newValue = e.target.value
+      onChange(newValue)
+
+      // コマンドメニューが開いている場合、フィルターを更新
+      if (commandMenuOpen && slashPosition !== null) {
+        const textarea = textareaRef.current
+        if (textarea) {
+          const cursorPos = textarea.selectionStart
+          const textAfterSlash = newValue.substring(slashPosition + 1, cursorPos)
+
+          // スペースや改行が入力されたらメニューを閉じる
+          if (textAfterSlash.includes(' ') || textAfterSlash.includes('\n')) {
+            setCommandMenuOpen(false)
+            setSlashPosition(null)
+          } else {
+            setCommandFilter(textAfterSlash)
+          }
+        }
+      }
+    },
+    [onChange, commandMenuOpen, slashPosition]
+  )
+
+  // テキスト選択ハンドラ（mouseupで発火）
+  const handleMouseUp = useCallback(() => {
+    // 少し遅延させてクリックイベントと競合しないようにする
+    setTimeout(() => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+
+      const selection = textarea.value.substring(
+        textarea.selectionStart,
+        textarea.selectionEnd
+      )
+
+      if (selection.length > 5) {
+        setCurrentSelection(selection)
+
+        // ブラウザの選択範囲から位置を取得
+        const windowSelection = window.getSelection()
+        if (windowSelection && windowSelection.rangeCount > 0) {
+          const range = windowSelection.getRangeAt(0)
+          const rects = range.getClientRects()
+          if (rects.length > 0) {
+            const lastRect = rects[rects.length - 1]
+            setSelectionPopupPosition({
+              x: lastRect.left + lastRect.width / 2,
+              y: lastRect.top - 10,
+            })
+          } else {
+            // フォールバック: textarea の位置を使用
+            const rect = textarea.getBoundingClientRect()
+            setSelectionPopupPosition({
+              x: rect.left + rect.width / 2,
+              y: rect.top + 50,
+            })
+          }
+        }
+        setSelectionPopupOpen(true)
+      } else {
+        setSelectionPopupOpen(false)
+        setCurrentSelection('')
+      }
+    }, 10)
+  }, [])
+
+  // コマンドメニューを閉じる
+  const handleCloseCommandMenu = useCallback(() => {
+    setCommandMenuOpen(false)
+    setSlashPosition(null)
+    setCommandFilter('')
+
+    // スラッシュとフィルターを削除
+    if (slashPosition !== null) {
+      const textarea = textareaRef.current
+      if (textarea) {
+        const before = value.substring(0, slashPosition)
+        const after = value.substring(textarea.selectionStart)
+        onChange(before + after)
+
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = slashPosition
+          textarea.focus()
+        })
+      }
+    }
+  }, [slashPosition, value, onChange])
+
+  // スキル実行
+  const handleExecuteSkill = useCallback(
+    (skill: Skill) => {
+      handleCloseCommandMenu()
+      setSelectionPopupOpen(false)
+      if (onExecuteSkill) {
+        onExecuteSkill(skill, currentSelection)
+      }
+    },
+    [onExecuteSkill, currentSelection, handleCloseCommandMenu]
+  )
+
+  // 校閲
+  const handleReview = useCallback(() => {
+    handleCloseCommandMenu()
+    if (onReview) {
+      onReview()
+    }
+  }, [onReview, handleCloseCommandMenu])
+
+  // 下書き生成
+  const handleGenerateDraft = useCallback(() => {
+    handleCloseCommandMenu()
+    if (onGenerateDraft) {
+      onGenerateDraft()
+    }
+  }, [onGenerateDraft, handleCloseCommandMenu])
+
+  // 画像挿入
+  const handleInsertImage = useCallback(() => {
+    handleCloseCommandMenu()
+    handleUploadClick()
+  }, [handleCloseCommandMenu, handleUploadClick])
+
+  // 選択解除時にポップアップを閉じる
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const windowSelection = window.getSelection()
+      if (!windowSelection || windowSelection.isCollapsed) {
+        // 選択が解除された場合
+        setTimeout(() => {
+          setSelectionPopupOpen(false)
+          setCurrentSelection('')
+        }, 100)
+      }
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => document.removeEventListener('selectionchange', handleSelectionChange)
+  }, [])
+
   return (
     <div className="relative w-full h-full flex flex-col">
-      {/* ツールバー */}
-      <div className="flex items-center gap-2 mb-2">
-        <button
-          type="button"
-          onClick={handleUploadClick}
-          disabled={isUploading}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg border border-gray-300 disabled:opacity-50 transition-colors"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          {isUploading ? 'アップロード中...' : '画像を追加'}
-        </button>
-        <span className="text-xs text-gray-400">
-          またはクリップボードから貼り付け / ドラッグ&ドロップ
-        </span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+      {/* ヒント */}
+      <div className="flex items-center gap-3 mb-2 text-xs text-gray-400">
+        <span>「/」でコマンド</span>
+        <span>テキスト選択でAI機能</span>
+        <span>画像は貼り付け/ドロップ</span>
       </div>
 
       {/* エディタ */}
@@ -179,12 +347,14 @@ export function Editor({ value, onChange }: EditorProps) {
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          onMouseUp={handleMouseUp}
           onPaste={handlePaste}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          placeholder="Markdownで記事を書いてください...&#10;&#10;画像はドラッグ&ドロップまたは貼り付けで追加できます"
+          placeholder="Markdownで記事を書いてください...&#10;&#10;/を入力してコマンドメニューを開く&#10;テキストを選択してAI機能を使用"
           className={`editor-textarea w-full h-full p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed transition-colors ${
             isDragging
               ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-300'
@@ -209,9 +379,7 @@ export function Editor({ value, onChange }: EditorProps) {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <p className="text-blue-600 font-medium">
-                ここに画像をドロップ
-              </p>
+              <p className="text-blue-600 font-medium">ここに画像をドロップ</p>
             </div>
           </div>
         )}
@@ -233,6 +401,38 @@ export function Editor({ value, onChange }: EditorProps) {
           <p className="text-sm text-red-600">{error.message}</p>
         </div>
       )}
+
+      {/* 非表示のファイル入力 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* コマンドメニュー */}
+      <EditorCommandMenu
+        isOpen={commandMenuOpen}
+        position={commandMenuPosition}
+        filter={commandFilter}
+        skills={skills}
+        onClose={handleCloseCommandMenu}
+        onExecuteSkill={handleExecuteSkill}
+        onInsertImage={handleInsertImage}
+        onReview={handleReview}
+        onGenerateDraft={handleGenerateDraft}
+      />
+
+      {/* 選択ポップアップ */}
+      <EditorSelectionPopup
+        isOpen={selectionPopupOpen}
+        position={selectionPopupPosition}
+        skills={skills}
+        onClose={() => setSelectionPopupOpen(false)}
+        onExecuteSkill={handleExecuteSkill}
+      />
     </div>
   )
 }
