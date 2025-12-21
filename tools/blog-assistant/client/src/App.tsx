@@ -15,7 +15,6 @@ const defaultFrontmatter: ArticleFrontmatter = {
   description: '',
   publishedAt: new Date().toISOString().split('T')[0],
   tags: [],
-  draft: true,
 }
 
 type Tab = 'preview' | 'review' | 'generate' | 'astro'
@@ -56,7 +55,6 @@ export default function App() {
         const descMatch = yamlContent.match(/description:\s*["'](.+?)["']/)
         const dateMatch = yamlContent.match(/publishedAt:\s*(\S+)/)
         const tagsMatch = yamlContent.match(/tags:\s*\[(.+?)\]/)
-        const draftMatch = yamlContent.match(/draft:\s*(true|false)/)
 
         const newFrontmatter: ArticleFrontmatter = {
           title: titleMatch?.[1] || '',
@@ -67,7 +65,6 @@ export default function App() {
                 .split(',')
                 .map((t) => t.trim().replace(/["']/g, ''))
             : [],
-          draft: draftMatch?.[1] === 'true',
         }
 
         setFrontmatter(newFrontmatter)

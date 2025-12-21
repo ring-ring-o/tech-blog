@@ -7,7 +7,6 @@ export interface ArticleFrontmatter {
   publishedAt: string
   updatedAt?: string
   tags: string[]
-  draft?: boolean
 }
 
 /**

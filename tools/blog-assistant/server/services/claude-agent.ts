@@ -98,7 +98,6 @@ title: "記事タイトル"
 description: "記事の説明（120-160文字推奨）"
 publishedAt: ${today}
 tags: ["タグ1", "タグ2"]
-draft: true
 ---
 
 # 見出し
