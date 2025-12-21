@@ -29,7 +29,7 @@ export default function App() {
 
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
-  const { save, isSaving, savedUrl } = useArticle()
+  const { save, isSaving, savedUrl, savedFilename, savedSlug } = useArticle()
 
   const handleReview = useCallback(async () => {
     setActiveTab('review')
@@ -98,18 +98,19 @@ export default function App() {
     setIsSaveModalOpen(false)
   }, [])
 
-  const slug = frontmatter.title
-    ? `${frontmatter.publishedAt}-${frontmatter.title
-        .toLowerCase()
-        .replace(/[^a-z0-9\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]+/g, '-')
-        .substring(0, 50)}`
-    : ''
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-800">Blog Assistant</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-gray-800">Blog Assistant</h1>
+          {savedFilename && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-xs text-green-600">保存済み:</span>
+              <code className="text-sm text-green-800">{savedFilename}</code>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           {savedUrl && (
             <a
@@ -244,7 +245,7 @@ export default function App() {
                 onApply={handleApplyGenerated}
               />
             )}
-            {activeTab === 'astro' && <AstroPreview slug={slug} />}
+            {activeTab === 'astro' && <AstroPreview slug={savedSlug || ''} />}
           </div>
         </div>
       </div>
