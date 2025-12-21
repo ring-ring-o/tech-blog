@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { serveStatic } from '@hono/node-server/serve-static'
 import articlesRoute from './routes/articles.js'
 import reviewRoute from './routes/review.js'
 import generateRoute from './routes/generate.js'
 import previewRoute from './routes/preview.js'
 import skillsRoute from './routes/skills.js'
+import imagesRoute from './routes/images.js'
 
 export const app = new Hono()
 
@@ -22,12 +24,21 @@ app.use(
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
+// Static files (images)
+app.use(
+  '/images/*',
+  serveStatic({
+    root: '/workspace/public',
+  })
+)
+
 // API Routes
 app.route('/api/articles', articlesRoute)
 app.route('/api/review', reviewRoute)
 app.route('/api/generate', generateRoute)
 app.route('/api/preview', previewRoute)
 app.route('/api/skills', skillsRoute)
+app.route('/api/images', imagesRoute)
 
 // Error handler
 app.onError((err, c) => {

@@ -499,7 +499,7 @@ export default function App() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-auto">
+          <div className={`flex-1 ${activeTab === 'astro' ? 'flex flex-col min-h-0' : 'overflow-auto'}`}>
             {activeTab === 'preview' && (
               <div className="p-4">
                 <Preview content={content} frontmatter={frontmatter} />
@@ -523,7 +523,7 @@ export default function App() {
               <SkillsPanel onExecuteSkill={handleExecuteSkill} />
             )}
             {activeTab === 'astro' && (
-              <div className="p-4">
+              <div className="p-4 flex-1 flex flex-col min-h-0">
                 <AstroPreview slug={savedSlug || ''} />
               </div>
             )}

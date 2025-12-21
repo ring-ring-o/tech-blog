@@ -29,11 +29,6 @@ export function Preview({ content, frontmatter }: PreviewProps) {
           )}
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <span>{frontmatter.publishedAt}</span>
-            {frontmatter.draft && (
-              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded">
-                下書き
-              </span>
-            )}
           </div>
           {frontmatter.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">

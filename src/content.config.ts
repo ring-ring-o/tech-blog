@@ -34,8 +34,8 @@ const blogSchema = z.object({
   publishedAt: z.coerce.date(),
   /** 更新日（任意） */
   updatedAt: z.coerce.date().optional(),
-  /** タグ一覧 */
-  tags: z.array(z.string()).min(1).max(10),
+  /** タグ一覧（任意） */
+  tags: z.array(z.string()).max(10).default([]),
   /** 下書きフラグ */
   draft: z.boolean().default(false),
 })
@@ -49,9 +49,9 @@ const blogSchema = z.object({
  * - title: 記事タイトル（1-200文字）
  * - description: 記事の概要（1-300文字）
  * - publishedAt: 公開日
- * - tags: タグ配列（1-10個）
  *
  * オプションフィールド:
+ * - tags: タグ配列（0-10個、デフォルト: []）
  * - updatedAt: 更新日
  * - draft: 下書きフラグ（デフォルト: false）
  *
