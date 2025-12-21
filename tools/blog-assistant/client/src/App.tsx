@@ -7,10 +7,12 @@ import { ReviewPanel } from './components/ReviewPanel'
 import { GeneratePanel } from './components/GeneratePanel'
 import { SaveModal } from './components/SaveModal'
 import { ArticleList } from './components/ArticleList'
+import { SkillsPanel } from './components/SkillsPanel'
+import { SkillExecutor } from './components/SkillExecutor'
 import { useAIReview } from './hooks/useAIReview'
 import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
-import type { ArticleFrontmatter, BlogDirectory, Article } from '@shared/types'
+import type { ArticleFrontmatter, BlogDirectory, Article, Skill } from '@shared/types'
 
 const defaultFrontmatter: ArticleFrontmatter = {
   title: '',
@@ -19,7 +21,7 @@ const defaultFrontmatter: ArticleFrontmatter = {
   tags: [],
 }
 
-type Tab = 'preview' | 'review' | 'generate' | 'astro'
+type Tab = 'preview' | 'review' | 'generate' | 'skills' | 'astro'
 
 export default function App() {
   const [content, setContent] = useState('')
@@ -36,6 +38,10 @@ export default function App() {
   const [selectedDirectory, setSelectedDirectory] = useState<BlogDirectory | 'all'>('all')
   const [saveDirectory, setSaveDirectory] = useState<BlogDirectory>('blog')
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
+
+  // スキル実行状態
+  const [executingSkill, setExecutingSkill] = useState<Skill | null>(null)
+  const [editorSelection, setEditorSelection] = useState('')
 
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
@@ -202,6 +208,27 @@ export default function App() {
     setSaveDirectory(directory)
   }, [])
 
+  // スキル実行
+  const handleExecuteSkill = useCallback((skill: Skill) => {
+    // テキストエリアから選択テキストを取得
+    const selection = window.getSelection()?.toString() || ''
+    setEditorSelection(selection)
+    setExecutingSkill(skill)
+  }, [])
+
+  // スキル結果を適用
+  const handleApplySkillResult = useCallback((result: string) => {
+    // 結果をコンテンツに追加または置換
+    if (editorSelection) {
+      // 選択テキストがあれば置換
+      setContent((prev) => prev.replace(editorSelection, result))
+    } else {
+      // なければ末尾に追加
+      setContent((prev) => prev + '\n\n' + result)
+    }
+    setActiveTab('preview')
+  }, [editorSelection])
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -289,6 +316,20 @@ export default function App() {
         onCancel={handleCancelSave}
         onDirectoryChange={handleSaveDirectoryChange}
       />
+
+      {/* Skill Executor Modal */}
+      {executingSkill && (
+        <SkillExecutor
+          skill={executingSkill}
+          content={content}
+          title={frontmatter.title}
+          description={frontmatter.description}
+          tags={frontmatter.tags}
+          selection={editorSelection}
+          onClose={() => setExecutingSkill(null)}
+          onApplyResult={handleApplySkillResult}
+        />
+      )}
 
       {/* Main Content */}
       <div ref={containerRef} className="flex-1 flex overflow-hidden">
@@ -396,6 +437,16 @@ export default function App() {
               生成結果
             </button>
             <button
+              onClick={() => setActiveTab('skills')}
+              className={`px-4 py-3 font-medium ${
+                activeTab === 'skills'
+                  ? 'border-b-2 border-green-600 text-green-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              スキル
+            </button>
+            <button
               onClick={() => setActiveTab('astro')}
               className={`px-4 py-3 font-medium ${
                 activeTab === 'astro'
@@ -408,21 +459,34 @@ export default function App() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 overflow-auto">
             {activeTab === 'preview' && (
-              <Preview content={content} frontmatter={frontmatter} />
+              <div className="p-4">
+                <Preview content={content} frontmatter={frontmatter} />
+              </div>
             )}
             {activeTab === 'review' && (
-              <ReviewPanel text={reviewText} isLoading={isReviewing} />
+              <div className="p-4">
+                <ReviewPanel text={reviewText} isLoading={isReviewing} />
+              </div>
             )}
             {activeTab === 'generate' && (
-              <GeneratePanel
-                text={generateText}
-                isLoading={isGenerating}
-                onApply={handleApplyGenerated}
-              />
+              <div className="p-4">
+                <GeneratePanel
+                  text={generateText}
+                  isLoading={isGenerating}
+                  onApply={handleApplyGenerated}
+                />
+              </div>
             )}
-            {activeTab === 'astro' && <AstroPreview slug={savedSlug || ''} />}
+            {activeTab === 'skills' && (
+              <SkillsPanel onExecuteSkill={handleExecuteSkill} />
+            )}
+            {activeTab === 'astro' && (
+              <div className="p-4">
+                <AstroPreview slug={savedSlug || ''} />
+              </div>
+            )}
           </div>
         </div>
       </div>

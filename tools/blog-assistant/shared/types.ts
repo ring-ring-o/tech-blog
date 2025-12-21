@@ -75,3 +75,44 @@ export type SSEMessage =
   | { type: 'tool'; name: string; input: unknown }
   | { type: 'result'; sessionId?: string }
   | { type: 'error'; message: string }
+
+/**
+ * スキルカテゴリ
+ */
+export type SkillCategory = 'review' | 'generate' | 'assist'
+
+/**
+ * スキル定義
+ */
+export interface Skill {
+  id: string
+  name: string
+  description: string
+  category: SkillCategory
+  systemPrompt: string
+  userPromptTemplate: string
+  /** 利用可能な変数: {{content}}, {{title}}, {{description}}, {{tags}}, {{selection}} */
+  variables: string[]
+  isBuiltIn: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * スキル実行リクエスト
+ */
+export interface ExecuteSkillRequest {
+  skillId: string
+  variables: Record<string, string>
+}
+
+/**
+ * スキル作成/更新リクエスト
+ */
+export interface SaveSkillRequest {
+  name: string
+  description: string
+  category: SkillCategory
+  systemPrompt: string
+  userPromptTemplate: string
+}
