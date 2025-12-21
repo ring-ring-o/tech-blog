@@ -75,7 +75,8 @@ export class ArticleService {
    */
   async saveArticle(
     frontmatter: ArticleFrontmatter,
-    content: string
+    content: string,
+    customSlug?: string
   ): Promise<SaveArticleResponse> {
     // ディレクトリが存在しない場合は作成
     if (!existsSync(BLOG_DIR)) {
@@ -84,7 +85,7 @@ export class ArticleService {
 
     // ファイル名生成: YYYY-MM-DD-slug.md
     const dateStr = frontmatter.publishedAt.split('T')[0]
-    const slug = this.generateSlug(frontmatter.title)
+    const slug = customSlug || this.generateSlug(frontmatter.title)
     const filename = `${dateStr}-${slug}.md`
 
     // Frontmatter + 本文を結合

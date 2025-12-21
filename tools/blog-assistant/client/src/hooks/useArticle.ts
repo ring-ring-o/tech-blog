@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import type { ArticleFrontmatter, SaveArticleResponse } from '@shared/types'
 
 interface UseArticleReturn {
-  save: (content: string, frontmatter: ArticleFrontmatter) => Promise<void>
+  save: (content: string, frontmatter: ArticleFrontmatter, slug?: string) => Promise<void>
   isSaving: boolean
   savedUrl: string | null
   error: Error | null
@@ -14,7 +14,7 @@ export function useArticle(): UseArticleReturn {
   const [error, setError] = useState<Error | null>(null)
 
   const save = useCallback(
-    async (content: string, frontmatter: ArticleFrontmatter) => {
+    async (content: string, frontmatter: ArticleFrontmatter, slug?: string) => {
       setIsSaving(true)
       setError(null)
 
@@ -22,7 +22,7 @@ export function useArticle(): UseArticleReturn {
         const response = await fetch('/api/articles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content, frontmatter }),
+          body: JSON.stringify({ content, frontmatter, slug }),
         })
 
         if (!response.ok) {

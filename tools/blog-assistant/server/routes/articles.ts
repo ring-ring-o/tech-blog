@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { articleService } from '../services/article-service.js'
+import { generateSlug } from '../services/claude-agent.js'
 import type { SaveArticleRequest } from '../types/index.js'
 
 const app = new Hono()
@@ -16,6 +17,19 @@ app.get('/tags', async (c) => {
   return c.json(tags)
 })
 
+// タイトルから英語スラッグを生成
+app.post('/generate-slug', async (c) => {
+  const body = await c.req.json()
+  const { title } = body as { title: string }
+
+  if (!title) {
+    return c.json({ error: 'Title is required' }, 400)
+  }
+
+  const slug = await generateSlug(title)
+  return c.json({ slug })
+})
+
 // 記事を取得
 app.get('/:id', async (c) => {
   const id = c.req.param('id')
@@ -30,13 +44,17 @@ app.get('/:id', async (c) => {
 
 // 記事を保存
 app.post('/', async (c) => {
-  const body = (await c.req.json()) as SaveArticleRequest
+  const body = (await c.req.json()) as SaveArticleRequest & { slug?: string }
 
   if (!body.frontmatter?.title || !body.content) {
     return c.json({ error: 'Missing required fields' }, 400)
   }
 
-  const result = await articleService.saveArticle(body.frontmatter, body.content)
+  const result = await articleService.saveArticle(
+    body.frontmatter,
+    body.content,
+    body.slug
+  )
   return c.json(result, 201)
 })
 

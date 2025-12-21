@@ -2,6 +2,67 @@ import { query } from '@anthropic-ai/claude-agent-sdk'
 import type { ArticleFrontmatter } from '../types/index.js'
 
 /**
+ * タイトルを英語スラッグに変換
+ */
+export async function generateSlug(title: string): Promise<string> {
+  const prompt = `
+以下の日本語タイトルを、URL用の英語スラッグに変換してください。
+
+タイトル: ${title}
+
+## ルール
+- 英語の単語をハイフンでつなげる形式（kebab-case）
+- 最大50文字以内
+- 小文字のみ使用
+- 記事の内容を簡潔に表す
+- SEOを意識した適切なキーワードを含める
+
+## 出力形式
+スラッグのみを出力してください。説明や前置きは不要です。
+例: getting-started-with-react-hooks
+`
+
+  try {
+    let slug = ''
+    for await (const message of query({
+      prompt,
+      options: {
+        model: 'claude-sonnet-4-20250514',
+        systemPrompt: 'You are a URL slug generator. Output only the slug, nothing else.',
+        maxTurns: 1,
+        allowedTools: [],
+      },
+    })) {
+      // アシスタントメッセージからテキストを抽出
+      if (message.type === 'assistant' && message.message?.content) {
+        for (const block of message.message.content) {
+          if ('text' in block) {
+            slug += block.text
+          }
+        }
+      }
+    }
+
+    // クリーンアップ: 余分な文字を除去
+    return slug
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50)
+  } catch (error) {
+    console.error('generateSlug error:', error)
+    // フォールバック: 簡易的な変換
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50)
+  }
+}
+
+/**
  * AI校閲を実行
  */
 export async function* reviewArticle(

@@ -5,6 +5,7 @@ import { Preview } from './components/Preview'
 import { AstroPreview } from './components/AstroPreview'
 import { ReviewPanel } from './components/ReviewPanel'
 import { GeneratePanel } from './components/GeneratePanel'
+import { SaveModal } from './components/SaveModal'
 import { useAIReview } from './hooks/useAIReview'
 import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
@@ -24,6 +25,7 @@ export default function App() {
   const [frontmatter, setFrontmatter] = useState<ArticleFrontmatter>(defaultFrontmatter)
   const [activeTab, setActiveTab] = useState<Tab>('preview')
   const [generateTopic, setGenerateTopic] = useState('')
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
 
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
@@ -79,10 +81,22 @@ export default function App() {
     }
   }, [generateText])
 
-  const handleSave = useCallback(async () => {
+  const handleSaveClick = useCallback(() => {
     if (!content || !frontmatter.title) return
-    await save(content, frontmatter)
-  }, [content, frontmatter, save])
+    setIsSaveModalOpen(true)
+  }, [content, frontmatter.title])
+
+  const handleConfirmSave = useCallback(
+    async (slug: string) => {
+      setIsSaveModalOpen(false)
+      await save(content, frontmatter, slug)
+    },
+    [content, frontmatter, save]
+  )
+
+  const handleCancelSave = useCallback(() => {
+    setIsSaveModalOpen(false)
+  }, [])
 
   const slug = frontmatter.title
     ? `${frontmatter.publishedAt}-${frontmatter.title
@@ -108,7 +122,7 @@ export default function App() {
             </a>
           )}
           <button
-            onClick={handleSave}
+            onClick={handleSaveClick}
             disabled={isSaving || !content || !frontmatter.title}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -116,6 +130,15 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {/* Save Modal */}
+      <SaveModal
+        isOpen={isSaveModalOpen}
+        title={frontmatter.title}
+        publishedAt={frontmatter.publishedAt}
+        onSave={handleConfirmSave}
+        onCancel={handleCancelSave}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
