@@ -6,10 +6,11 @@ import { AstroPreview } from './components/AstroPreview'
 import { ReviewPanel } from './components/ReviewPanel'
 import { GeneratePanel } from './components/GeneratePanel'
 import { SaveModal } from './components/SaveModal'
+import { ArticleList } from './components/ArticleList'
 import { useAIReview } from './hooks/useAIReview'
 import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
-import type { ArticleFrontmatter } from '@shared/types'
+import type { ArticleFrontmatter, BlogDirectory, Article } from '@shared/types'
 
 const defaultFrontmatter: ArticleFrontmatter = {
   title: '',
@@ -30,9 +31,34 @@ export default function App() {
   const [isResizing, setIsResizing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // 記事編集状態
+  const [showArticleList, setShowArticleList] = useState(false)
+  const [selectedDirectory, setSelectedDirectory] = useState<BlogDirectory | 'all'>('all')
+  const [saveDirectory, setSaveDirectory] = useState<BlogDirectory>('blog')
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null)
+
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
-  const { save, isSaving, savedUrl, savedFilename, savedSlug } = useArticle()
+  const {
+    save,
+    isSaving,
+    savedUrl,
+    savedFilename,
+    savedSlug,
+    savedDirectory,
+    isUpdate,
+    articles,
+    isLoadingArticles,
+    loadArticles,
+    clearSaved,
+  } = useArticle()
+
+  // 記事一覧を読み込み
+  useEffect(() => {
+    if (showArticleList) {
+      loadArticles()
+    }
+  }, [showArticleList, loadArticles])
 
   // リサイズ処理
   const handleMouseDown = useCallback(() => {
@@ -127,15 +153,53 @@ export default function App() {
   }, [content, frontmatter.title])
 
   const handleConfirmSave = useCallback(
-    async (slug: string) => {
+    async (slug: string, directory: BlogDirectory) => {
       setIsSaveModalOpen(false)
-      await save(content, frontmatter, slug)
+      await save({
+        content,
+        frontmatter,
+        directory,
+        slug: slug || undefined,
+        existingFilename: editingArticle?.filename,
+      })
+      // 記事一覧を更新
+      if (showArticleList) {
+        loadArticles()
+      }
     },
-    [content, frontmatter, save]
+    [content, frontmatter, save, editingArticle, showArticleList, loadArticles]
   )
 
   const handleCancelSave = useCallback(() => {
     setIsSaveModalOpen(false)
+  }, [])
+
+  // 既存記事を選択
+  const handleSelectArticle = useCallback((article: Article) => {
+    setContent(article.content)
+    setFrontmatter(article.frontmatter)
+    setEditingArticle(article)
+    setSaveDirectory(article.directory)
+    clearSaved()
+  }, [clearSaved])
+
+  // 新規記事を作成
+  const handleNewArticle = useCallback(() => {
+    setContent('')
+    setFrontmatter(defaultFrontmatter)
+    setEditingArticle(null)
+    setSaveDirectory('blog')
+    clearSaved()
+  }, [clearSaved])
+
+  // ディレクトリ変更
+  const handleDirectoryChange = useCallback((directory: BlogDirectory | 'all') => {
+    setSelectedDirectory(directory)
+  }, [])
+
+  // 保存先ディレクトリ変更
+  const handleSaveDirectoryChange = useCallback((directory: BlogDirectory) => {
+    setSaveDirectory(directory)
   }, [])
 
   return (
@@ -144,9 +208,47 @@ export default function App() {
       <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-gray-800">Blog Assistant</h1>
-          {savedFilename && (
+          {/* 記事一覧トグル */}
+          <button
+            onClick={() => setShowArticleList(!showArticleList)}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              showArticleList
+                ? 'bg-blue-50 border-blue-300 text-blue-700'
+                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {showArticleList ? '記事一覧を隠す' : '記事一覧'}
+          </button>
+          {/* 編集中の記事情報 */}
+          {editingArticle && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-lg">
+              <span
+                className={`px-1.5 py-0.5 text-[10px] rounded ${
+                  editingArticle.directory === 'blog'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-purple-100 text-purple-700'
+                }`}
+              >
+                {editingArticle.directory}
+              </span>
+              <span className="text-xs text-amber-600">編集中:</span>
+              <code className="text-sm text-amber-800">{editingArticle.filename}</code>
+            </div>
+          )}
+          {savedFilename && !editingArticle && (
             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-lg">
-              <span className="text-xs text-green-600">保存済み:</span>
+              <span
+                className={`px-1.5 py-0.5 text-[10px] rounded ${
+                  savedDirectory === 'blog'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-purple-100 text-purple-700'
+                }`}
+              >
+                {savedDirectory}
+              </span>
+              <span className="text-xs text-green-600">
+                {isUpdate ? '更新済み:' : '保存済み:'}
+              </span>
               <code className="text-sm text-green-800">{savedFilename}</code>
             </div>
           )}
@@ -165,9 +267,13 @@ export default function App() {
           <button
             onClick={handleSaveClick}
             disabled={isSaving || !content || !frontmatter.title}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+              editingArticle
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
           >
-            {isSaving ? '保存中...' : '保存'}
+            {isSaving ? '保存中...' : editingArticle ? '更新' : '保存'}
           </button>
         </div>
       </header>
@@ -177,15 +283,33 @@ export default function App() {
         isOpen={isSaveModalOpen}
         title={frontmatter.title}
         publishedAt={frontmatter.publishedAt}
+        directory={saveDirectory}
+        existingFilename={editingArticle?.filename}
         onSave={handleConfirmSave}
         onCancel={handleCancelSave}
+        onDirectoryChange={handleSaveDirectoryChange}
       />
 
       {/* Main Content */}
       <div ref={containerRef} className="flex-1 flex overflow-hidden">
+        {/* Article List Panel */}
+        {showArticleList && (
+          <div className="w-64 flex-shrink-0 border-r bg-white">
+            <ArticleList
+              articles={articles}
+              isLoading={isLoadingArticles}
+              selectedDirectory={selectedDirectory}
+              onDirectoryChange={handleDirectoryChange}
+              onSelectArticle={handleSelectArticle}
+              onNewArticle={handleNewArticle}
+              currentArticleId={editingArticle?.id}
+            />
+          </div>
+        )}
+
         {/* Left Panel: Editor */}
         <div
-          className="flex flex-col border-r bg-white"
+          className="flex flex-col border-r bg-white flex-shrink-0"
           style={{ width: `${leftPanelWidth}%` }}
         >
           {/* Frontmatter Form */}
@@ -236,8 +360,8 @@ export default function App() {
 
         {/* Right Panel: Preview/Review/Generate/Astro */}
         <div
-          className="flex flex-col bg-white"
-          style={{ width: `${100 - leftPanelWidth}%` }}
+          className="flex flex-col bg-white flex-1"
+          style={{ minWidth: 0 }}
         >
           {/* Tabs */}
           <div className="border-b flex">

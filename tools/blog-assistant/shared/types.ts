@@ -1,4 +1,9 @@
 /**
+ * ブログディレクトリタイプ
+ */
+export type BlogDirectory = 'blog' | 'blog-demo'
+
+/**
  * 記事のFrontmatter
  */
 export interface ArticleFrontmatter {
@@ -16,6 +21,7 @@ export interface Article {
   id: string
   slug: string
   filename: string
+  directory: BlogDirectory
   frontmatter: ArticleFrontmatter
   content: string
 }
@@ -47,6 +53,9 @@ export interface GenerateRequest {
 export interface SaveArticleRequest {
   content: string
   frontmatter: ArticleFrontmatter
+  directory: BlogDirectory
+  slug?: string
+  existingFilename?: string // 更新時に既存ファイル名を指定
 }
 
 /**
@@ -55,6 +64,7 @@ export interface SaveArticleRequest {
 export interface SaveArticleResponse {
   filename: string
   previewUrl: string
+  isUpdate: boolean
 }
 
 /**

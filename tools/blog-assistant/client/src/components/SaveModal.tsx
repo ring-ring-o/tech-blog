@@ -1,20 +1,28 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import type { BlogDirectory } from '@shared/types'
 
 interface SaveModalProps {
   isOpen: boolean
   title: string
   publishedAt: string
-  onSave: (slug: string) => void
+  directory: BlogDirectory
+  existingFilename?: string // 更新時に既存ファイル名を渡す
+  onSave: (slug: string, directory: BlogDirectory) => void
   onCancel: () => void
+  onDirectoryChange: (directory: BlogDirectory) => void
 }
 
 export function SaveModal({
   isOpen,
   title,
   publishedAt,
+  directory,
+  existingFilename,
   onSave,
   onCancel,
+  onDirectoryChange,
 }: SaveModalProps) {
+  const isUpdate = !!existingFilename
   const [slug, setSlug] = useState('')
   const [translatedSlug, setTranslatedSlug] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -106,8 +114,8 @@ export function SaveModal({
   const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(slug)
 
   const handleSave = () => {
-    if (finalSlug.trim()) {
-      onSave(finalSlug)
+    if (isUpdate || finalSlug.trim()) {
+      onSave(isUpdate ? '' : finalSlug, directory)
     }
   }
 
@@ -120,112 +128,170 @@ export function SaveModal({
 
   if (!isOpen) return null
 
-  const previewFilename = `${dateStr}-${finalSlug || 'your-slug'}.md`
+  const previewFilename = isUpdate
+    ? existingFilename
+    : `${dateStr}-${finalSlug || 'your-slug'}.md`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
         {/* Header */}
         <div className="px-6 py-4 border-b">
-          <h2 className="text-lg font-bold text-gray-800">記事を保存</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-800">
+              {isUpdate ? '記事を更新' : '記事を保存'}
+            </h2>
+            {isUpdate && (
+              <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                更新
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Body */}
         <div className="px-6 py-4 space-y-4">
+          {/* Directory selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              保存先ディレクトリ
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onDirectoryChange('blog')}
+                disabled={isUpdate}
+                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
+                  directory === 'blog'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${isUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="font-medium">blog</div>
+                <div className="text-xs text-gray-500">本番用</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => onDirectoryChange('blog-demo')}
+                disabled={isUpdate}
+                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
+                  directory === 'blog-demo'
+                    ? 'border-purple-500 bg-purple-50 text-purple-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${isUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="font-medium">blog-demo</div>
+                <div className="text-xs text-gray-500">デモ用</div>
+              </button>
+            </div>
+            {isUpdate && (
+              <p className="mt-1 text-xs text-gray-500">
+                更新時はディレクトリを変更できません
+              </p>
+            )}
+          </div>
+
           {/* Original title */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">元のタイトル</label>
+            <label className="block text-xs text-gray-500 mb-1">タイトル</label>
             <p className="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded-lg">
               {title}
             </p>
           </div>
 
-          {/* Auto translate toggle */}
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              AIでファイル名を英訳
-            </label>
-            <button
-              type="button"
-              onClick={handleAutoTranslateToggle}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                autoTranslate ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  autoTranslate ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
+          {/* Only show slug input for new articles */}
+          {!isUpdate && (
+            <>
+              {/* Auto translate toggle */}
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  AIでファイル名を英訳
+                </label>
+                <button
+                  type="button"
+                  onClick={handleAutoTranslateToggle}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    autoTranslate ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      autoTranslate ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
 
-          {/* AI translation result */}
-          {autoTranslate && (
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-blue-600 font-medium">AI翻訳結果</span>
-                {!isGenerating && translatedSlug && (
-                  <button
-                    type="button"
-                    onClick={handleRegenerate}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    再生成
-                  </button>
+              {/* AI translation result */}
+              {autoTranslate && (
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-blue-600 font-medium">AI翻訳結果</span>
+                    {!isGenerating && translatedSlug && (
+                      <button
+                        type="button"
+                        onClick={handleRegenerate}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        再生成
+                      </button>
+                    )}
+                  </div>
+                  {isGenerating ? (
+                    <p className="text-sm text-blue-800 animate-pulse">生成中...</p>
+                  ) : translatedSlug ? (
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm text-blue-800 bg-blue-100 px-2 py-1 rounded flex-1">
+                        {translatedSlug}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={applyTranslatedSlug}
+                        className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        適用
+                      </button>
+                    </div>
+                  ) : error ? (
+                    <p className="text-sm text-red-600">{error}</p>
+                  ) : (
+                    <p className="text-sm text-gray-500">翻訳結果がありません</p>
+                  )}
+                </div>
+              )}
+
+              {/* Slug input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ファイル名（スラッグ）
+                </label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="example-article-name"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {hasJapanese && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    ※ 日本語は自動的にハイフンに変換されます
+                  </p>
                 )}
               </div>
-              {isGenerating ? (
-                <p className="text-sm text-blue-800 animate-pulse">生成中...</p>
-              ) : translatedSlug ? (
-                <div className="flex items-center gap-2">
-                  <code className="text-sm text-blue-800 bg-blue-100 px-2 py-1 rounded flex-1">
-                    {translatedSlug}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={applyTranslatedSlug}
-                    className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    適用
-                  </button>
-                </div>
-              ) : error ? (
-                <p className="text-sm text-red-600">{error}</p>
-              ) : (
-                <p className="text-sm text-gray-500">翻訳結果がありません</p>
-              )}
-            </div>
+            </>
           )}
-
-          {/* Slug input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              ファイル名（スラッグ）
-            </label>
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="example-article-name"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {hasJapanese && (
-              <p className="mt-1 text-xs text-amber-600">
-                ※ 日本語は自動的にハイフンに変換されます
-              </p>
-            )}
-          </div>
 
           {/* Preview */}
           <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-1">保存されるファイル名:</p>
+            <p className="text-xs text-gray-500 mb-1">
+              {isUpdate ? '更新されるファイル:' : '保存されるファイル名:'}
+            </p>
             <p className="text-sm font-mono text-gray-800 break-all">
               {previewFilename}
             </p>
             <p className="text-xs text-gray-500 mt-2">URL:</p>
             <p className="text-sm font-mono text-blue-600 break-all">
-              /posts/{dateStr}-{finalSlug || 'your-slug'}
+              /posts/{isUpdate ? existingFilename?.replace(/\.md$/, '') : `${dateStr}-${finalSlug || 'your-slug'}`}
             </p>
           </div>
         </div>
@@ -242,10 +308,14 @@ export function SaveModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!finalSlug.trim() || isGenerating}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={(!isUpdate && !finalSlug.trim()) || isGenerating}
+            className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+              isUpdate
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
           >
-            保存する
+            {isUpdate ? '更新する' : '保存する'}
           </button>
         </div>
       </div>

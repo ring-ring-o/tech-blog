@@ -1,13 +1,14 @@
 import { Hono } from 'hono'
 import { articleService } from '../services/article-service.js'
 import { generateSlug } from '../services/claude-agent.js'
-import type { SaveArticleRequest } from '../types/index.js'
+import type { SaveArticleRequest, BlogDirectory } from '../types/index.js'
 
 const app = new Hono()
 
-// 記事一覧を取得
+// 記事一覧を取得（?directory=blog or ?directory=blog-demo）
 app.get('/', async (c) => {
-  const articles = await articleService.listArticles()
+  const directory = c.req.query('directory') as BlogDirectory | undefined
+  const articles = await articleService.listArticles(directory)
   return c.json(articles)
 })
 
@@ -42,9 +43,9 @@ app.get('/:id', async (c) => {
   return c.json(article)
 })
 
-// 記事を保存
+// 記事を保存（新規作成または更新）
 app.post('/', async (c) => {
-  const body = (await c.req.json()) as SaveArticleRequest & { slug?: string }
+  const body = (await c.req.json()) as SaveArticleRequest
 
   if (!body.frontmatter?.title || !body.content) {
     return c.json({ error: 'Missing required fields' }, 400)
@@ -53,9 +54,11 @@ app.post('/', async (c) => {
   const result = await articleService.saveArticle(
     body.frontmatter,
     body.content,
-    body.slug
+    body.directory || 'blog',
+    body.slug,
+    body.existingFilename
   )
-  return c.json(result, 201)
+  return c.json(result, body.existingFilename ? 200 : 201)
 })
 
 // 記事を削除
