@@ -10,6 +10,12 @@ app.get('/', async (c) => {
   return c.json(articles)
 })
 
+// 全記事からタグ一覧を取得
+app.get('/tags', async (c) => {
+  const tags = await articleService.getAllTags()
+  return c.json(tags)
+})
+
 // 記事を取得
 app.get('/:id', async (c) => {
   const id = c.req.param('id')
