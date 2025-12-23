@@ -4,6 +4,7 @@ import { FrontmatterForm } from './components/FrontmatterForm'
 import { Preview } from './components/Preview'
 import { AstroPreview } from './components/AstroPreview'
 import { SaveModal } from './components/SaveModal'
+import { CreateArticleModal } from './components/CreateArticleModal'
 import { ArticleList } from './components/ArticleList'
 import { SkillExecutor } from './components/SkillExecutor'
 import { SkillEditor } from './components/SkillEditor'
@@ -39,6 +40,9 @@ export default function App() {
   const [selectedDirectory, setSelectedDirectory] = useState<BlogDirectory | 'all'>('all')
   const [saveDirectory, setSaveDirectory] = useState<BlogDirectory>('blog')
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
+  // 新規記事作成モーダル
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isCreatingArticle, setIsCreatingArticle] = useState(false)
 
   // UI状態
   const [isFrontmatterCollapsed, setIsFrontmatterCollapsed] = useState(false)
@@ -281,14 +285,67 @@ export default function App() {
     clearSaved()
   }, [clearSaved])
 
-  // 新規記事を作成
+  // 新規記事を作成（モーダルを表示）
   const handleNewArticle = useCallback(() => {
-    setContent('')
-    setFrontmatter(defaultFrontmatter)
-    setEditingArticle(null)
-    setSaveDirectory('blog')
-    clearSaved()
-  }, [clearSaved])
+    setIsCreateModalOpen(true)
+  }, [])
+
+  // 新規記事作成を確定
+  const handleConfirmCreate = useCallback(
+    async (title: string, slug: string, directory: BlogDirectory) => {
+      setIsCreatingArticle(true)
+      try {
+        const newFrontmatter: ArticleFrontmatter = {
+          title,
+          description: '',
+          publishedAt: new Date().toISOString().split('T')[0],
+          tags: [],
+        }
+
+        // 記事を作成（空のコンテンツで）
+        await save({
+          content: '',
+          frontmatter: newFrontmatter,
+          directory,
+          slug,
+        })
+
+        // 保存結果からファイル名を取得して記事を読み込み
+        // savedFilenameは非同期で更新されるため、手動で構築
+        const dateStr = newFrontmatter.publishedAt
+        const filename = `${dateStr}-${slug}/index.md`
+
+        // 編集モードに移行
+        setContent('')
+        setFrontmatter(newFrontmatter)
+        setEditingArticle({
+          id: `${directory}/${filename}`,
+          filename,
+          directory,
+          slug: `${dateStr}-${slug}`,
+          content: '',
+          frontmatter: newFrontmatter,
+          isFolder: true,
+        })
+        setSaveDirectory(directory)
+        setIsCreateModalOpen(false)
+
+        if (showArticleList) {
+          loadArticles()
+        }
+      } catch (err) {
+        console.error('Failed to create article:', err)
+      } finally {
+        setIsCreatingArticle(false)
+      }
+    },
+    [save, showArticleList, loadArticles]
+  )
+
+  // 新規記事作成をキャンセル
+  const handleCancelCreate = useCallback(() => {
+    setIsCreateModalOpen(false)
+  }, [])
 
   // ディレクトリ変更
   const handleDirectoryChange = useCallback((directory: BlogDirectory | 'all') => {
@@ -418,6 +475,13 @@ export default function App() {
         onSave={handleConfirmSave}
         onCancel={handleCancelSave}
         onDirectoryChange={handleSaveDirectoryChange}
+      />
+
+      {/* Create Article Modal */}
+      <CreateArticleModal
+        isOpen={isCreateModalOpen}
+        onConfirm={handleConfirmCreate}
+        onCancel={handleCancelCreate}
       />
 
       {/* Topic Input Modal */}
@@ -608,6 +672,14 @@ export default function App() {
               onExecuteSkill={handleExecuteSkill}
               onReview={handleReview}
               onGenerateDraft={handleGenerateDraft}
+              articleImageContext={
+                editingArticle
+                  ? {
+                      slug: editingArticle.slug,
+                      directory: editingArticle.directory,
+                    }
+                  : null
+              }
             />
           </div>
         </div>

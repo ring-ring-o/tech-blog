@@ -64,8 +64,15 @@ export function useArticle(): UseArticleReturn {
       setSavedFilename(result.filename)
       setSavedDirectory(options.directory)
       setIsUpdate(result.isUpdate)
-      // filenameから拡張子を除いたものがslug
-      const slugFromFilename = result.filename.replace(/\.md$/, '')
+      // filenameからslugを抽出
+      // フォルダ構造: "2025-01-01-title/index.md" -> "2025-01-01-title"
+      // フラット構造: "2025-01-01-title.md" -> "2025-01-01-title"
+      let slugFromFilename = result.filename
+      if (slugFromFilename.endsWith('/index.md')) {
+        slugFromFilename = slugFromFilename.replace('/index.md', '')
+      } else if (slugFromFilename.endsWith('.md')) {
+        slugFromFilename = slugFromFilename.replace(/\.md$/, '')
+      }
       setSavedSlug(slugFromFilename)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'))

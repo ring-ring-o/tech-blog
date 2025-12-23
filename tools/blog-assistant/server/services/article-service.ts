@@ -1,5 +1,13 @@
-import { readdir, readFile, writeFile, unlink, mkdir } from 'node:fs/promises'
-import { join, parse } from 'node:path'
+import {
+  readdir,
+  readFile,
+  writeFile,
+  unlink,
+  mkdir,
+  rm,
+  stat,
+} from 'node:fs/promises'
+import { join, parse, dirname } from 'node:path'
 import { existsSync } from 'node:fs'
 import matter from 'gray-matter'
 import type {
@@ -17,12 +25,66 @@ const DIRECTORIES: Record<BlogDirectory, string> = {
 const BLOG_DIR = DIRECTORIES.blog
 const BLOG_DEMO_DIR = DIRECTORIES['blog-demo']
 
+/** 記事構造の種類 */
+interface ArticleEntry {
+  /** フルパス */
+  path: string
+  /** ファイル名またはフォルダ名 */
+  name: string
+  /** フォルダ構造かどうか */
+  isFolder: boolean
+  /** スラッグ（日付プレフィックスを含む） */
+  slug: string
+}
+
 export class ArticleService {
   /**
    * ディレクトリパスを取得
    */
   private getDirectoryPath(directory: BlogDirectory): string {
     return DIRECTORIES[directory]
+  }
+
+  /**
+   * ディレクトリ内の記事エントリを取得（フラット・フォルダ両対応）
+   */
+  private async findArticleEntries(dirPath: string): Promise<ArticleEntry[]> {
+    if (!existsSync(dirPath)) {
+      return []
+    }
+
+    const entries: ArticleEntry[] = []
+    const items = await readdir(dirPath)
+
+    for (const item of items) {
+      if (item === '.gitkeep') continue
+
+      const itemPath = join(dirPath, item)
+      const itemStat = await stat(itemPath)
+
+      if (itemStat.isDirectory()) {
+        // フォルダ構造: item/index.md を探す
+        const indexPath = join(itemPath, 'index.md')
+        if (existsSync(indexPath)) {
+          entries.push({
+            path: indexPath,
+            name: item,
+            isFolder: true,
+            slug: item,
+          })
+        }
+      } else if (item.endsWith('.md')) {
+        // フラットファイル構造
+        entries.push({
+          path: itemPath,
+          name: item,
+          isFolder: false,
+          slug: parse(item).name,
+        })
+      }
+    }
+
+    return entries
   }
 
   /**
@@ -43,24 +105,26 @@ export class ArticleService {
         continue
       }
 
-      const files = await readdir(dirPath)
-      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== '.gitkeep')
+      const entries = await this.findArticleEntries(dirPath)
 
       const articles = await Promise.all(
-        mdFiles.map(async (filename) => {
-          const filePath = join(dirPath, filename)
-          const fileContent = await readFile(filePath, 'utf-8')
+        entries.map(async (entry) => {
+          const fileContent = await readFile(entry.path, 'utf-8')
           const { data, content } = matter(fileContent)
 
-          const slug = parse(filename).name
+          // ファイル名の決定: フォルダの場合は slug/index.md
+          const filename = entry.isFolder
+            ? `${entry.slug}/index.md`
+            : entry.name
 
           return {
             id: `${dir}/${filename}`,
-            slug,
+            slug: entry.slug,
             filename,
             directory: dir,
             frontmatter: data as ArticleFrontmatter,
             content,
+            isFolder: entry.isFolder,
           }
         })
       )
@@ -77,16 +141,40 @@ export class ArticleService {
   }
 
   /**
-   * 記事を取得（idは "directory/filename" 形式）
+   * 記事を取得（idは "directory/filename" または "directory/slug/index.md" 形式）
    */
   async getArticle(id: string): Promise<Article | null> {
-    // idを分解（例: "blog/2024-01-01-example.md"）
-    const [directory, filename] = id.includes('/')
-      ? (id.split('/') as [BlogDirectory, string])
-      : (['blog' as BlogDirectory, id])
+    // idを分解（例: "blog/2024-01-01-example.md" または "blog/2024-01-01-example/index.md"）
+    const parts = id.split('/')
+    const directory = parts[0] as BlogDirectory
+    const rest = parts.slice(1).join('/')
 
     const dirPath = this.getDirectoryPath(directory)
-    const filePath = join(dirPath, filename)
+    let filePath: string
+    let isFolder: boolean
+    let slug: string
+    let filename: string
+
+    // フォルダ構造かフラットかを判定
+    if (rest.endsWith('/index.md')) {
+      // フォルダ構造: slug/index.md
+      slug = rest.replace('/index.md', '')
+      filePath = join(dirPath, rest)
+      isFolder = true
+      filename = rest
+    } else if (rest.includes('/')) {
+      // フォルダ構造の別形式
+      slug = parts[1]
+      filePath = join(dirPath, slug, 'index.md')
+      isFolder = true
+      filename = `${slug}/index.md`
+    } else {
+      // フラットファイル
+      filePath = join(dirPath, rest)
+      isFolder = false
+      slug = parse(rest).name
+      filename = rest
+    }
 
     if (!existsSync(filePath)) {
       return null
@@ -94,7 +182,6 @@ export class ArticleService {
 
     const fileContent = await readFile(filePath, 'utf-8')
     const { data, content } = matter(fileContent)
-    const slug = parse(filename).name
 
     return {
       id,
@@ -103,11 +190,13 @@ export class ArticleService {
       directory,
       frontmatter: data as ArticleFrontmatter,
       content,
+      isFolder,
     }
   }
 
   /**
    * 記事を保存（新規作成または更新）
+   * 新規作成時はフォルダ構造で保存、更新時は既存構造を維持
    */
   async saveArticle(
     frontmatter: ArticleFrontmatter,
@@ -124,51 +213,107 @@ export class ArticleService {
     }
 
     let filename: string
+    let filePath: string
     let isUpdate = false
+    let slug: string
 
     if (existingFilename) {
-      // 更新モード: 既存ファイル名を使用
+      // 更新モード: 既存ファイル構造を維持
       filename = existingFilename
       isUpdate = true
 
       // 更新日時を追加
       frontmatter.updatedAt = new Date().toISOString().split('T')[0]
+
+      // フォルダ構造かフラットかを判定
+      if (existingFilename.endsWith('/index.md')) {
+        slug = existingFilename.replace('/index.md', '')
+        filePath = join(dirPath, existingFilename)
+      } else {
+        slug = parse(existingFilename).name
+        filePath = join(dirPath, existingFilename)
+      }
     } else {
-      // 新規作成モード: ファイル名生成 YYYY-MM-DD-slug.md
+      // 新規作成モード: フォルダ構造で作成
       const dateStr = frontmatter.publishedAt.split('T')[0]
-      const slug = customSlug || this.generateSlug(frontmatter.title)
-      filename = `${dateStr}-${slug}.md`
+      slug = customSlug || this.generateSlug(frontmatter.title)
+      const folderSlug = `${dateStr}-${slug}`
+
+      // フォルダを作成
+      const articleDir = join(dirPath, folderSlug)
+      await mkdir(articleDir, { recursive: true })
+
+      // 画像用フォルダも作成
+      const imagesDir = join(articleDir, 'images')
+      await mkdir(imagesDir, { recursive: true })
+
+      filename = `${folderSlug}/index.md`
+      filePath = join(articleDir, 'index.md')
+      slug = folderSlug
     }
 
     // Frontmatter + 本文を結合
     const fileContent = matter.stringify(content, frontmatter)
 
-    const filePath = join(dirPath, filename)
     await writeFile(filePath, fileContent, 'utf-8')
 
     // Astro dev serverのプレビューURL
-    const previewUrl = `http://localhost:4321/posts/${parse(filename).name}`
+    const previewUrl = `http://localhost:4321/posts/${slug}`
 
     return { filename, previewUrl, isUpdate }
   }
 
   /**
+   * 記事の画像保存先ディレクトリを取得
+   */
+  getArticleImagesDir(directory: BlogDirectory, slug: string): string {
+    const dirPath = this.getDirectoryPath(directory)
+    return join(dirPath, slug, 'images')
+  }
+
+  /**
+   * 記事の画像保存先ディレクトリを確保（存在しなければ作成）
+   */
+  async ensureArticleImagesDir(
+    directory: BlogDirectory,
+    slug: string
+  ): Promise<string> {
+    const imagesDir = this.getArticleImagesDir(directory, slug)
+    if (!existsSync(imagesDir)) {
+      await mkdir(imagesDir, { recursive: true })
+    }
+    return imagesDir
+  }
+
+  /**
    * 記事を削除（idは "directory/filename" 形式）
+   * フォルダ構造の場合はフォルダごと削除
    */
   async deleteArticle(id: string): Promise<boolean> {
-    const [directory, filename] = id.includes('/')
-      ? (id.split('/') as [BlogDirectory, string])
-      : (['blog' as BlogDirectory, id])
+    const parts = id.split('/')
+    const directory = parts[0] as BlogDirectory
+    const rest = parts.slice(1).join('/')
 
     const dirPath = this.getDirectoryPath(directory)
-    const filePath = join(dirPath, filename)
 
-    if (!existsSync(filePath)) {
-      return false
+    // フォルダ構造かフラットかを判定
+    if (rest.endsWith('/index.md')) {
+      // フォルダ構造: フォルダごと削除
+      const folderPath = join(dirPath, rest.replace('/index.md', ''))
+      if (!existsSync(folderPath)) {
+        return false
+      }
+      await rm(folderPath, { recursive: true })
+      return true
+    } else {
+      // フラットファイル
+      const filePath = join(dirPath, rest)
+      if (!existsSync(filePath)) {
+        return false
+      }
+      await unlink(filePath)
+      return true
     }
-
-    await unlink(filePath)
-    return true
   }
 
   /**

@@ -12,6 +12,8 @@ export interface ArticleFrontmatter {
   publishedAt: string
   updatedAt?: string
   tags: string[]
+  /** ヒーロー画像（相対パス） */
+  heroImage?: string
 }
 
 /**
@@ -20,10 +22,13 @@ export interface ArticleFrontmatter {
 export interface Article {
   id: string
   slug: string
+  /** ファイル名（フラット: slug.md, フォルダ: slug/index.md） */
   filename: string
   directory: BlogDirectory
   frontmatter: ArticleFrontmatter
   content: string
+  /** フォルダ構造かどうか */
+  isFolder: boolean
 }
 
 /**
@@ -115,4 +120,35 @@ export interface SaveSkillRequest {
   category: SkillCategory
   systemPrompt: string
   userPromptTemplate: string
+}
+
+/**
+ * 画像アップロードリクエスト（記事紐付け）
+ */
+export interface ImageUploadRequest {
+  /** 記事のスラッグ（フォルダ名として使用） */
+  slug: string
+  /** 保存先ディレクトリ */
+  directory: BlogDirectory
+}
+
+/**
+ * 画像アップロードレスポンス
+ */
+export interface ImageUploadResponse {
+  success: boolean
+  /** ファイル名 */
+  filename: string
+  /** 絶対パス */
+  absolutePath: string
+  /** Markdown用の相対パス（./images/filename.webp） */
+  relativePath: string
+  /** Markdown記法 */
+  markdown: string
+  /** 画像の幅 */
+  width: number
+  /** 画像の高さ */
+  height: number
+  /** ファイルサイズ（バイト） */
+  size: number
 }

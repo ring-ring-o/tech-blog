@@ -11,4 +11,6 @@ export type {
   Skill,
   ExecuteSkillRequest,
   SaveSkillRequest,
+  ImageUploadRequest,
+  ImageUploadResponse,
 } from '../../shared/types.js'

@@ -1,8 +1,14 @@
-import { useRef, useCallback, useState, useEffect, DragEvent, ClipboardEvent, KeyboardEvent } from 'react'
+import { useRef, useCallback, useState, useEffect, type DragEvent, type ClipboardEvent, type KeyboardEvent } from 'react'
 import { useImageUpload } from '../hooks/useImageUpload'
 import { EditorCommandMenu } from './EditorCommandMenu'
 import { EditorSelectionPopup } from './EditorSelectionPopup'
-import type { Skill } from '@shared/types'
+import type { Skill, BlogDirectory } from '@shared/types'
+
+/** 画像を記事フォルダに保存するためのコンテキスト */
+interface ArticleImageContext {
+  slug: string
+  directory: BlogDirectory
+}
 
 interface EditorProps {
   value: string
@@ -11,6 +17,8 @@ interface EditorProps {
   onExecuteSkill?: (skill: Skill, selection: string) => void
   onReview?: () => void
   onGenerateDraft?: () => void
+  /** 記事の画像コンテキスト（既存記事または新規作成済み記事） */
+  articleImageContext?: ArticleImageContext | null
 }
 
 export function Editor({
@@ -20,11 +28,18 @@ export function Editor({
   onExecuteSkill,
   onReview,
   onGenerateDraft,
+  articleImageContext,
 }: EditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { uploadFile, uploadBase64, isUploading, error } = useImageUpload()
+
+  const { uploadFile, isUploading, error, setArticleContext } = useImageUpload()
   const [isDragging, setIsDragging] = useState(false)
+
+  // コンテキストが変わったらuseImageUploadを更新
+  useEffect(() => {
+    setArticleContext(articleImageContext || null)
+  }, [articleImageContext, setArticleContext])
 
   // コマンドメニュー状態
   const [commandMenuOpen, setCommandMenuOpen] = useState(false)
@@ -66,12 +81,18 @@ export function Editor({
         return
       }
 
+      // 記事が作成されていない場合はエラー
+      if (!articleImageContext) {
+        alert('画像をアップロードするには、まず「新規記事」から記事を作成してください。')
+        return
+      }
+
       const result = await uploadFile(file)
       if (result) {
         insertAtCursor(`\n${result.markdown}\n`)
       }
     },
-    [uploadFile, insertAtCursor]
+    [uploadFile, insertAtCursor, articleImageContext]
   )
 
   // クリップボードからの貼り付け

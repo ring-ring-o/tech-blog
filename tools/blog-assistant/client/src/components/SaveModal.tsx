@@ -128,9 +128,10 @@ export function SaveModal({
 
   if (!isOpen) return null
 
+  // プレビュー用のファイル名（フォルダ構造）
   const previewFilename = isUpdate
     ? existingFilename
-    : `${dateStr}-${finalSlug || 'your-slug'}.md`
+    : `${dateStr}-${finalSlug || 'your-slug'}/index.md`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -291,7 +292,9 @@ export function SaveModal({
             </p>
             <p className="text-xs text-gray-500 mt-2">URL:</p>
             <p className="text-sm font-mono text-blue-600 break-all">
-              /posts/{isUpdate ? existingFilename?.replace(/\.md$/, '') : `${dateStr}-${finalSlug || 'your-slug'}`}
+              /posts/{isUpdate
+                ? existingFilename?.replace(/\/index\.md$/, '').replace(/\.md$/, '')
+                : `${dateStr}-${finalSlug || 'your-slug'}`}
             </p>
           </div>
         </div>

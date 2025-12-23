@@ -3,14 +3,19 @@ import { writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, parse } from 'node:path'
 import crypto from 'node:crypto'
-
-// 画像保存先ディレクトリ
-const IMAGES_DIR = '/workspace/public/images/posts'
+import type {
+  BlogDirectory,
+  ImageUploadResponse,
+} from '../types/index.js'
+import { articleService } from './article-service.js'
 
 // 最適化設定
 const MAX_WIDTH = 1200
 const WEBP_QUALITY = 85
 
+/**
+ * @deprecated 古い形式。互換性のために残す
+ */
 export interface ImageUploadResult {
   filename: string
   path: string
@@ -22,17 +27,13 @@ export interface ImageUploadResult {
 
 export class ImageService {
   /**
-   * 画像をアップロードして最適化
+   * 画像を最適化してバッファを返す（共通処理）
    */
-  async uploadImage(
-    buffer: Buffer,
-    originalFilename: string
-  ): Promise<ImageUploadResult> {
-    // ディレクトリが存在しない場合は作成
-    if (!existsSync(IMAGES_DIR)) {
-      await mkdir(IMAGES_DIR, { recursive: true })
-    }
-
+  private async optimizeImage(buffer: Buffer): Promise<{
+    optimizedBuffer: Buffer
+    width: number
+    height: number
+  }> {
     // 画像のメタデータを取得
     const metadata = await sharp(buffer).metadata()
 
@@ -57,7 +58,17 @@ export class ImageService {
     // 最適化後のメタデータを取得
     const optimizedMetadata = await sharp(optimizedBuffer).metadata()
 
-    // ユニークなファイル名を生成
+    return {
+      optimizedBuffer,
+      width: optimizedMetadata.width || 0,
+      height: optimizedMetadata.height || 0,
+    }
+  }
+
+  /**
+   * ユニークなファイル名を生成
+   */
+  private generateFilename(originalFilename: string, buffer: Buffer): string {
     const timestamp = Date.now()
     const hash = crypto
       .createHash('md5')
@@ -69,7 +80,88 @@ export class ImageService {
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
       .substring(0, 30)
-    const filename = `${timestamp}-${baseName}-${hash}.webp`
+    return `${timestamp}-${baseName}-${hash}.webp`
+  }
+
+  /**
+   * 記事のフォルダ内に画像をアップロード
+   * Astroの画像最適化に対応した相対パスを返す
+   */
+  async uploadImageToArticle(
+    buffer: Buffer,
+    originalFilename: string,
+    directory: BlogDirectory,
+    slug: string
+  ): Promise<ImageUploadResponse> {
+    // 記事の画像フォルダを確保
+    const imagesDir = await articleService.ensureArticleImagesDir(
+      directory,
+      slug
+    )
+
+    // 画像を最適化
+    const { optimizedBuffer, width, height } = await this.optimizeImage(buffer)
+
+    // ファイル名を生成
+    const filename = this.generateFilename(originalFilename, buffer)
+
+    // ファイルを保存
+    const absolutePath = join(imagesDir, filename)
+    await writeFile(absolutePath, optimizedBuffer)
+
+    // Markdown用の相対パス（./images/filename.webp）
+    const relativePath = `./images/${filename}`
+
+    return {
+      success: true,
+      filename,
+      absolutePath,
+      relativePath,
+      markdown: `![](${relativePath})`,
+      width,
+      height,
+      size: optimizedBuffer.length,
+    }
+  }
+
+  /**
+   * 記事のフォルダ内にBase64画像をアップロード
+   */
+  async uploadBase64ImageToArticle(
+    base64Data: string,
+    filename: string,
+    directory: BlogDirectory,
+    slug: string
+  ): Promise<ImageUploadResponse> {
+    const base64Clean = base64Data.replace(/^data:image\/\w+;base64,/, '')
+    const buffer = Buffer.from(base64Clean, 'base64')
+    return this.uploadImageToArticle(
+      buffer,
+      filename || 'pasted-image.png',
+      directory,
+      slug
+    )
+  }
+
+  /**
+   * @deprecated 古い形式。互換性のために残す。public/images/postsに保存
+   */
+  async uploadImage(
+    buffer: Buffer,
+    originalFilename: string
+  ): Promise<ImageUploadResult> {
+    const IMAGES_DIR = '/workspace/public/images/posts'
+
+    // ディレクトリが存在しない場合は作成
+    if (!existsSync(IMAGES_DIR)) {
+      await mkdir(IMAGES_DIR, { recursive: true })
+    }
+
+    // 画像を最適化
+    const { optimizedBuffer, width, height } = await this.optimizeImage(buffer)
+
+    // ファイル名を生成
+    const filename = this.generateFilename(originalFilename, buffer)
 
     // ファイルを保存
     const filePath = join(IMAGES_DIR, filename)
@@ -82,8 +174,8 @@ export class ImageService {
       filename,
       path: filePath,
       markdownUrl,
-      width: optimizedMetadata.width || 0,
-      height: optimizedMetadata.height || 0,
+      width,
+      height,
       size: optimizedBuffer.length,
     }
   }

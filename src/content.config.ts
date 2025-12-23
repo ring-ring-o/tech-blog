@@ -4,7 +4,7 @@
  * @see {@link https://docs.astro.build/en/guides/content-collections/ Content Collections ドキュメント}
  */
 
-import { defineCollection, z } from 'astro:content'
+import { defineCollection, z, type ImageFunction } from 'astro:content'
 import { glob } from 'astro/loaders'
 
 /**
@@ -22,23 +22,27 @@ const contentMode = import.meta.env.CONTENT_MODE || 'demo'
 const blogBase = contentMode === 'production' ? './src/content/blog' : './src/content/blog-demo'
 
 /**
- * ブログ記事スキーマ
+ * ブログ記事スキーマを生成
  * @description 記事のフロントマター検証用
+ * @param image - Astroのimage()関数（画像最適化用）
  */
-const blogSchema = z.object({
-  /** 記事タイトル */
-  title: z.string().min(1).max(200),
-  /** 記事の概要・説明文 */
-  description: z.string().min(1).max(300),
-  /** 公開日（日付文字列から自動変換） */
-  publishedAt: z.coerce.date(),
-  /** 更新日（任意） */
-  updatedAt: z.coerce.date().optional(),
-  /** タグ一覧（任意） */
-  tags: z.array(z.string()).max(10).default([]),
-  /** 下書きフラグ */
-  draft: z.boolean().default(false),
-})
+const createBlogSchema = (image: ImageFunction) =>
+  z.object({
+    /** 記事タイトル */
+    title: z.string().min(1).max(200),
+    /** 記事の概要・説明文 */
+    description: z.string().min(1).max(300),
+    /** 公開日（日付文字列から自動変換） */
+    publishedAt: z.coerce.date(),
+    /** 更新日（任意） */
+    updatedAt: z.coerce.date().optional(),
+    /** タグ一覧（任意） */
+    tags: z.array(z.string()).max(10).default([]),
+    /** 下書きフラグ */
+    draft: z.boolean().default(false),
+    /** ヒーロー画像（任意、自動最適化対応） */
+    heroImage: image().optional(),
+  })
 
 /**
  * ブログ記事コレクション
@@ -68,7 +72,7 @@ const blogSchema = z.object({
  */
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.md', base: blogBase }),
-  schema: blogSchema,
+  schema: ({ image }) => createBlogSchema(image),
 })
 
 /**
