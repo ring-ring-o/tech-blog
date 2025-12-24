@@ -451,17 +451,15 @@ export default function App() {
               プレビュー
             </a>
           )}
-          <button
-            onClick={handleSaveClick}
-            disabled={isSaving || !content || !frontmatter.title}
-            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 disabled:cursor-not-allowed ${
-              editingArticle
-                ? 'bg-amber-600 hover:bg-amber-700'
-                : 'bg-green-600 hover:bg-green-700'
-            }`}
-          >
-            {isSaving ? '保存中...' : editingArticle ? '更新' : '保存'}
-          </button>
+          {editingArticle && (
+            <button
+              onClick={handleSaveClick}
+              disabled={isSaving || !content || !frontmatter.title}
+              className="px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 disabled:cursor-not-allowed bg-amber-600 hover:bg-amber-700"
+            >
+              {isSaving ? '保存中...' : '更新'}
+            </button>
+          )}
         </div>
       </header>
 
@@ -633,55 +631,99 @@ export default function App() {
           className="flex flex-col bg-white flex-shrink-0"
           style={{ width: isRightPaneCollapsed ? '100%' : `${leftPanelWidth}%` }}
         >
-          {/* Frontmatter Form (Collapsible) */}
-          <div className="border-b">
-            <button
-              onClick={() => setIsFrontmatterCollapsed(!isFrontmatterCollapsed)}
-              className="w-full px-4 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <svg
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
-                    isFrontmatterCollapsed ? '' : 'rotate-90'
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          {editingArticle ? (
+            <>
+              {/* Frontmatter Form (Collapsible) */}
+              <div className="border-b">
+                <button
+                  onClick={() => setIsFrontmatterCollapsed(!isFrontmatterCollapsed)}
+                  className="w-full px-4 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <span className="text-sm font-medium text-gray-700">メタ情報</span>
-                {isFrontmatterCollapsed && frontmatter.title && (
-                  <span className="text-sm text-gray-500 truncate max-w-[200px]">- {frontmatter.title}</span>
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className={`w-4 h-4 text-gray-500 transition-transform ${
+                        isFrontmatterCollapsed ? '' : 'rotate-90'
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">メタ情報</span>
+                    {isFrontmatterCollapsed && frontmatter.title && (
+                      <span className="text-sm text-gray-500 truncate max-w-[200px]">- {frontmatter.title}</span>
+                    )}
+                  </div>
+                </button>
+                {!isFrontmatterCollapsed && (
+                  <div className="p-4">
+                    <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
+                  </div>
                 )}
               </div>
-            </button>
-            {!isFrontmatterCollapsed && (
-              <div className="p-4">
-                <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
-              </div>
-            )}
-          </div>
 
-          {/* Editor */}
-          <div className="flex-1 p-4 overflow-auto">
-            <Editor
-              value={content}
-              onChange={setContent}
-              skills={skills}
-              onExecuteSkill={handleExecuteSkill}
-              onReview={handleReview}
-              onGenerateDraft={handleGenerateDraft}
-              articleImageContext={
-                editingArticle
-                  ? {
-                      slug: editingArticle.slug,
-                      directory: editingArticle.directory,
-                    }
-                  : null
-              }
-            />
-          </div>
+              {/* Editor */}
+              <div className="flex-1 p-4 overflow-auto">
+                <Editor
+                  value={content}
+                  onChange={setContent}
+                  skills={skills}
+                  onExecuteSkill={handleExecuteSkill}
+                  onReview={handleReview}
+                  onGenerateDraft={handleGenerateDraft}
+                  articleImageContext={{
+                    slug: editingArticle.slug,
+                    directory: editingArticle.directory,
+                  }}
+                />
+              </div>
+            </>
+          ) : (
+            /* Welcome Screen - No article selected */
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center max-w-md">
+                <div className="mb-6">
+                  <svg
+                    className="w-16 h-16 mx-auto text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-gray-700 mb-2">
+                  記事を作成または選択してください
+                </h2>
+                <p className="text-gray-500 mb-6">
+                  新しい記事を作成するか、既存の記事を選択して編集を開始します。
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleNewArticle}
+                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    新規記事を作成
+                  </button>
+                  <button
+                    onClick={() => setShowArticleList(true)}
+                    className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    既存の記事を開く
+                  </button>
+                </div>
+                <p className="mt-6 text-xs text-gray-400">
+                  画像を含む記事を作成するには、まず記事を作成してフォルダを確定する必要があります。
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Resizer */}
