@@ -3,6 +3,7 @@ import '../styles/global.css'
 import Footer from '../components/layout/Footer.astro'
 import Header from '../components/layout/Header.astro'
 import SEOHead from '../components/layout/SEOHead.astro'
+import { SITE } from '../lib/constants'
 
 interface Props {
   title: string
@@ -14,7 +15,7 @@ interface Props {
 }
 
 const { title, description, image, type = 'website', publishedAt, updatedAt } = Astro.props
-const fullTitle = title === 'Tech Blog' ? title : `${title} | Tech Blog`
+const fullTitle = title === SITE.NAME ? title : `${title} | ${SITE.NAME}`
 ---
 
 <!doctype html>

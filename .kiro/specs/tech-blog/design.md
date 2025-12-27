@@ -1,4 +1,4 @@
-# 技術設計書: Tech Blog
+# 技術設計書: Ring-a-Log
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # デプロイメントガイド
 
-このドキュメントでは、Tech Blog を Cloudflare Pages にデプロイする手順を説明します。
+このドキュメントでは、Ring-a-Log を Cloudflare Pages にデプロイする手順を説明します。
 
 ## 📋 前提条件
 

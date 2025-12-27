@@ -1,4 +1,4 @@
-# Tech Blog
+# Ring-a-Log
 
 モダンな技術ブログプラットフォーム - Astro 5.x、TypeScript、Tailwind CSS v4 で構築された高速・高性能な静的サイト。
 

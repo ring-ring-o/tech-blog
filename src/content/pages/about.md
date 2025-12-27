@@ -1,6 +1,6 @@
 ---
 title: "About"
-description: "Tech Blogについて - ブログの目的、方針、管理者プロフィール"
+description: "Ring-a-Logについて - ブログの目的、方針、管理者プロフィール"
 ---
 
 # About

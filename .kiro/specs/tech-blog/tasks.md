@@ -1,4 +1,4 @@
-# 実装計画: Tech Blog
+# 実装計画: Ring-a-Log
 
 - [x] 1. プロジェクトの初期化とビルド環境構築
   - Astro 5.x、TypeScript、Tailwind CSS v4、pnpmを使用したプロジェクトを初期化
