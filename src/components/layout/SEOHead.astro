@@ -1,4 +1,6 @@
 ---
+import { SITE } from '../../lib/constants'
+
 interface Props {
   title: string
   description?: string
@@ -10,7 +12,7 @@ interface Props {
 
 const {
   title,
-  description = '技術ブログ - プログラミング、システム管理、セキュリティに関する情報',
+  description = SITE.DESCRIPTION,
   image = '/og-image.png',
   type = 'website',
   publishedAt,
@@ -31,7 +33,7 @@ const imageURL = new URL(image, Astro.site)
 <meta property="og:type" content={type} />
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:image" content={imageURL} />
-<meta property="og:site_name" content="Tech Blog" />
+<meta property="og:site_name" content={SITE.NAME} />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
@@ -51,11 +53,11 @@ const imageURL = new URL(image, Astro.site)
       dateModified: updatedAt ? updatedAt.toISOString() : publishedAt.toISOString(),
       author: {
         '@type': 'Person',
-        name: 'Tech Blogger',
+        name: SITE.AUTHOR,
       },
       publisher: {
         '@type': 'Organization',
-        name: 'Tech Blog',
+        name: SITE.NAME,
         logo: {
           '@type': 'ImageObject',
           url: new URL('/logo.png', Astro.site).toString(),
@@ -70,7 +72,7 @@ const imageURL = new URL(image, Astro.site)
     <script type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Blog',
-      name: 'Tech Blog',
+      name: SITE.NAME,
       description: description,
     })} />
   )

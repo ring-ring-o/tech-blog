@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { API_ENDPOINTS } from '@shared/constants/api'
 
 interface GenerateRequirements {
   targetLength?: 'short' | 'medium' | 'long'
@@ -25,7 +26,7 @@ export function useAIGenerate(): UseAIGenerateReturn {
       setStreamingText('')
 
       try {
-        const response = await fetch('/api/generate', {
+        const response = await fetch(API_ENDPOINTS.GENERATE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ topic, requirements }),

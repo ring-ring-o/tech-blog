@@ -5,6 +5,7 @@ import type {
   BlogDirectory,
   Article,
 } from '@shared/types'
+import { API_ENDPOINTS } from '@shared/constants/api'
 
 interface SaveOptions {
   content: string
@@ -48,7 +49,7 @@ export function useArticle(): UseArticleReturn {
     setError(null)
 
     try {
-      const response = await fetch('/api/articles', {
+      const response = await fetch(API_ENDPOINTS.ARTICLES, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(options),
@@ -85,8 +86,8 @@ export function useArticle(): UseArticleReturn {
     setIsLoadingArticles(true)
     try {
       const url = directory
-        ? `/api/articles?directory=${directory}`
-        : '/api/articles'
+        ? `${API_ENDPOINTS.ARTICLES}?directory=${directory}`
+        : API_ENDPOINTS.ARTICLES
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to load articles')
@@ -102,7 +103,7 @@ export function useArticle(): UseArticleReturn {
 
   const loadArticle = useCallback(async (id: string): Promise<Article | null> => {
     try {
-      const response = await fetch(`/api/articles/${encodeURIComponent(id)}`)
+      const response = await fetch(`${API_ENDPOINTS.ARTICLES}/${encodeURIComponent(id)}`)
       if (!response.ok) {
         if (response.status === 404) return null
         throw new Error('Failed to load article')

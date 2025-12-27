@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Skill, SaveSkillRequest, SkillCategory } from '@shared/types'
+import { API_ENDPOINTS } from '@shared/constants/api'
 
 interface UseSkillsReturn {
   skills: Skill[]
@@ -29,8 +30,8 @@ export function useSkills(): UseSkillsReturn {
     setError(null)
     try {
       const url = category
-        ? `/api/skills?category=${category}`
-        : '/api/skills'
+        ? `${API_ENDPOINTS.SKILLS}?category=${category}`
+        : API_ENDPOINTS.SKILLS
       const response = await fetch(url)
       if (!response.ok) throw new Error('Failed to load skills')
       const data = await response.json()
@@ -44,7 +45,7 @@ export function useSkills(): UseSkillsReturn {
 
   const getSkill = useCallback(async (id: string): Promise<Skill | null> => {
     try {
-      const response = await fetch(`/api/skills/${id}`)
+      const response = await fetch(`${API_ENDPOINTS.SKILLS}/${id}`)
       if (!response.ok) {
         if (response.status === 404) return null
         throw new Error('Failed to load skill')
@@ -58,7 +59,7 @@ export function useSkills(): UseSkillsReturn {
 
   const createSkill = useCallback(async (data: SaveSkillRequest): Promise<Skill | null> => {
     try {
-      const response = await fetch('/api/skills', {
+      const response = await fetch(API_ENDPOINTS.SKILLS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -75,7 +76,7 @@ export function useSkills(): UseSkillsReturn {
 
   const updateSkill = useCallback(async (id: string, data: SaveSkillRequest): Promise<Skill | null> => {
     try {
-      const response = await fetch(`/api/skills/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.SKILLS}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -92,7 +93,7 @@ export function useSkills(): UseSkillsReturn {
 
   const deleteSkill = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/skills/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.SKILLS}/${id}`, {
         method: 'DELETE',
       })
       if (!response.ok) return false
@@ -114,7 +115,7 @@ export function useSkills(): UseSkillsReturn {
       setError(null)
 
       try {
-        const response = await fetch(`/api/skills/${skillId}/execute`, {
+        const response = await fetch(`${API_ENDPOINTS.SKILLS}/${skillId}/execute`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ skillId, variables }),

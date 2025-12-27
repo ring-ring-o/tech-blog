@@ -4,14 +4,15 @@ import Breadcrumb from '../../components/common/Breadcrumb.astro'
 import Pagination from '../../components/common/Pagination.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { contentRepository } from '../../lib/repositories'
+import { PAGINATION } from '../../lib/constants'
 
 export async function getStaticPaths() {
   const tags = await contentRepository.getAllTags()
+  const { POSTS_PER_PAGE } = PAGINATION
 
   const paths = []
   for (const tag of tags) {
     const posts = await contentRepository.getPostsByTag(tag.name)
-    const POSTS_PER_PAGE = 10
     const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE)
 
     // 最初のページ

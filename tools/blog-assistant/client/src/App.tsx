@@ -14,6 +14,7 @@ import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
 import { useSkills } from './hooks/useSkills'
 import type { ArticleFrontmatter, BlogDirectory, Article, Skill, SaveSkillRequest } from '@shared/types'
+import { PANEL_CONFIG } from '@shared/constants/ui'
 
 const defaultFrontmatter: ArticleFrontmatter = {
   title: '',
@@ -29,7 +30,7 @@ export default function App() {
   const [frontmatter, setFrontmatter] = useState<ArticleFrontmatter>(defaultFrontmatter)
   const [activeTab, setActiveTab] = useState<RightTab>('results')
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
-  const [leftPanelWidth, setLeftPanelWidth] = useState(55)
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
   const [isRightPaneCollapsed, setIsRightPaneCollapsed] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -102,11 +103,11 @@ export default function App() {
       const containerRect = containerRef.current.getBoundingClientRect()
       const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
 
-      // 95%以上で右ペインを折りたたむ
-      if (newWidth >= 95) {
+      // 閾値以上で右ペインを折りたたむ
+      if (newWidth >= PANEL_CONFIG.COLLAPSE_THRESHOLD) {
         setIsRightPaneCollapsed(true)
-        setLeftPanelWidth(100)
-      } else if (newWidth >= 30 && newWidth <= 95) {
+        setLeftPanelWidth(PANEL_CONFIG.FULL_WIDTH)
+      } else if (newWidth >= PANEL_CONFIG.MIN_LEFT_WIDTH && newWidth <= PANEL_CONFIG.COLLAPSE_THRESHOLD) {
         setIsRightPaneCollapsed(false)
         setLeftPanelWidth(newWidth)
       }
@@ -135,10 +136,10 @@ export default function App() {
   const toggleRightPane = useCallback(() => {
     if (isRightPaneCollapsed) {
       setIsRightPaneCollapsed(false)
-      setLeftPanelWidth(55)
+      setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
     } else {
       setIsRightPaneCollapsed(true)
-      setLeftPanelWidth(100)
+      setLeftPanelWidth(PANEL_CONFIG.FULL_WIDTH)
     }
   }, [isRightPaneCollapsed])
 
@@ -147,7 +148,7 @@ export default function App() {
     if (!content) return
     setActiveTab('results')
     setIsRightPaneCollapsed(false)
-    setLeftPanelWidth(55)
+    setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
     await review(content, frontmatter)
   }, [content, frontmatter, review])
 
@@ -172,7 +173,7 @@ export default function App() {
   const handleGenerateDraft = useCallback(() => {
     setShowTopicInput(true)
     setIsRightPaneCollapsed(false)
-    setLeftPanelWidth(55)
+    setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
   }, [])
 
   const handleConfirmGenerate = useCallback(async () => {

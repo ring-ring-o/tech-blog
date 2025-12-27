@@ -1,5 +1,6 @@
 import { query } from '@anthropic-ai/claude-agent-sdk'
 import type { ArticleFrontmatter } from '../types/index.js'
+import { AI_MODELS, AI_AGENT_CONFIG, CONTENT_LIMITS } from '../../shared/constants/content.js'
 
 /**
  * タイトルを英語スラッグに変換
@@ -27,9 +28,9 @@ export async function generateSlug(title: string): Promise<string> {
     for await (const message of query({
       prompt,
       options: {
-        model: 'claude-sonnet-4-20250514',
+        model: AI_MODELS.DEFAULT,
         systemPrompt: 'You are a URL slug generator. Output only the slug, nothing else.',
-        maxTurns: 1,
+        maxTurns: AI_AGENT_CONFIG.SLUG_GENERATION_MAX_TURNS,
         allowedTools: [],
       },
     })) {
@@ -50,7 +51,7 @@ export async function generateSlug(title: string): Promise<string> {
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
-      .substring(0, 50)
+      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH)
   } catch (error) {
     console.error('generateSlug error:', error)
     // フォールバック: 簡易的な変換
@@ -58,7 +59,7 @@ export async function generateSlug(title: string): Promise<string> {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
-      .substring(0, 50)
+      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH)
   }
 }
 
@@ -107,7 +108,7 @@ ${content}
     for await (const message of query({
       prompt,
       options: {
-        model: 'claude-sonnet-4-20250514',
+        model: AI_MODELS.DEFAULT,
         resume: sessionId,
         systemPrompt: `あなたは技術ブログの編集者です。
 日本語で丁寧に校閲を行い、具体的な修正提案を行ってください。
@@ -117,7 +118,7 @@ Markdownの書式に注意し、読みやすい記事になるようアドバイ
 ## 重要な指示
 - 絵文字は使用しないでください
 - 柔らかい「ですます調」で執筆してください`,
-        maxTurns: 5,
+        maxTurns: AI_AGENT_CONFIG.REVIEW_MAX_TURNS,
         allowedTools: [],
       },
     })) {
@@ -190,7 +191,7 @@ tags: ["タグ1", "タグ2"]
     for await (const message of query({
       prompt,
       options: {
-        model: 'claude-sonnet-4-20250514',
+        model: AI_MODELS.DEFAULT,
         systemPrompt: `あなたは技術ブログのライターです。
 SEOを意識した読みやすい技術記事を執筆してください。
 適切な見出し構造、コードブロック、リストを使用してください。
@@ -204,7 +205,7 @@ SEOを意識した読みやすい技術記事を執筆してください。
   - 技術的な主張には根拠や検証結果を示すこと
   - 前提知識や環境を明記すること
   - 必要に応じて公式ドキュメントや信頼できる情報源への言及を含めること`,
-        maxTurns: 3,
+        maxTurns: AI_AGENT_CONFIG.DRAFT_GENERATION_MAX_TURNS,
         allowedTools: [],
       },
     })) {

@@ -11,9 +11,13 @@
  * - ワンクリックでコードをクリップボードにコピー
  * - Astroのビュー遷移に対応
  */
+import { UI_TIMING, LANGUAGE_DISPLAY_NAMES } from '../../lib/constants'
+
+const copySuccessDuration = UI_TIMING.COPY_SUCCESS_DURATION
+const languageDisplayNames = LANGUAGE_DISPLAY_NAMES
 ---
 
-<script>
+<script define:vars={{ copySuccessDuration, languageDisplayNames }}>
   /**
    * コピーアイコンのSVG文字列
    * @description クリップボードにコピーする前のデフォルト状態で表示
@@ -27,79 +31,12 @@
   const CHECK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
   /**
-   * コピー成功表示の持続時間（ミリ秒）
-   */
-  const COPY_SUCCESS_DURATION = 2000;
-
-  /**
-   * 言語名の表示用マッピング
-   * @description コードフェンスで指定される言語識別子を読みやすい表示名に変換
-   */
-  const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
-    js: 'JavaScript',
-    javascript: 'JavaScript',
-    ts: 'TypeScript',
-    typescript: 'TypeScript',
-    jsx: 'JSX',
-    tsx: 'TSX',
-    html: 'HTML',
-    css: 'CSS',
-    scss: 'SCSS',
-    sass: 'Sass',
-    less: 'Less',
-    json: 'JSON',
-    yaml: 'YAML',
-    yml: 'YAML',
-    xml: 'XML',
-    md: 'Markdown',
-    markdown: 'Markdown',
-    mdx: 'MDX',
-    py: 'Python',
-    python: 'Python',
-    rb: 'Ruby',
-    ruby: 'Ruby',
-    go: 'Go',
-    rust: 'Rust',
-    rs: 'Rust',
-    java: 'Java',
-    kotlin: 'Kotlin',
-    kt: 'Kotlin',
-    swift: 'Swift',
-    c: 'C',
-    cpp: 'C++',
-    'c++': 'C++',
-    cs: 'C#',
-    csharp: 'C#',
-    php: 'PHP',
-    sql: 'SQL',
-    graphql: 'GraphQL',
-    gql: 'GraphQL',
-    bash: 'Bash',
-    sh: 'Shell',
-    shell: 'Shell',
-    zsh: 'Zsh',
-    powershell: 'PowerShell',
-    ps1: 'PowerShell',
-    dockerfile: 'Dockerfile',
-    docker: 'Docker',
-    nginx: 'Nginx',
-    apache: 'Apache',
-    astro: 'Astro',
-    vue: 'Vue',
-    svelte: 'Svelte',
-    diff: 'Diff',
-    text: 'Text',
-    txt: 'Text',
-    plaintext: 'Plain Text',
-  };
-
-  /**
    * 言語識別子を表示用の名前に変換
    * @param lang - コードフェンスで指定された言語識別子
    * @returns 表示用の言語名（マッピングにない場合は元の値を返す）
    */
-  function getDisplayLanguage(lang: string): string {
-    return LANGUAGE_DISPLAY_NAMES[lang.toLowerCase()] || lang;
+  function getDisplayLanguage(lang) {
+    return languageDisplayNames[lang.toLowerCase()] || lang;
   }
 
   /**
@@ -107,10 +44,7 @@
    * @param codeElement - コードを含む要素
    * @param button - コピーボタン要素
    */
-  function createCopyHandler(
-    codeElement: Element,
-    button: HTMLButtonElement
-  ): () => Promise<void> {
+  function createCopyHandler(codeElement, button) {
     return async () => {
       try {
         const text = codeElement.textContent || '';
@@ -126,7 +60,7 @@
           button.innerHTML = COPY_ICON_SVG;
           button.classList.remove('copied');
           button.setAttribute('aria-label', 'コードをコピー');
-        }, COPY_SUCCESS_DURATION);
+        }, copySuccessDuration);
       } catch (error) {
         console.error('コードのコピーに失敗しました:', error);
       }
@@ -137,8 +71,8 @@
    * コードブロックにヘッダーを追加
    * @description ページ内の全コードブロックを検索し、ヘッダー（タイトル+コピーボタン）を追加する
    */
-  function addCodeBlockHeaders(): void {
-    const codeBlocks = document.querySelectorAll<HTMLPreElement>('pre[data-language]');
+  function addCodeBlockHeaders() {
+    const codeBlocks = document.querySelectorAll('pre[data-language]');
 
     for (const block of codeBlocks) {
       // 既にヘッダーが追加されている場合はスキップ

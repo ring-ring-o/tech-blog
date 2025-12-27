@@ -4,8 +4,9 @@ import Breadcrumb from '../components/common/Breadcrumb.astro'
 import Pagination from '../components/common/Pagination.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { contentRepository } from '../lib/repositories'
+import { PAGINATION, SITE } from '../lib/constants'
 
-const POSTS_PER_PAGE = 10
+const { POSTS_PER_PAGE } = PAGINATION
 const currentPage = 1
 
 const allPosts = await contentRepository.getAllPosts()
@@ -17,7 +18,7 @@ const endIndex = startIndex + POSTS_PER_PAGE
 const currentPosts = allPosts.slice(startIndex, endIndex)
 ---
 
-<BaseLayout title="Tech Blog" description="技術ブログ - プログラミング、システム管理、セキュリティに関する情報">
+<BaseLayout title={SITE.NAME} description={SITE.DESCRIPTION}>
   <div class="max-w-5xl mx-auto">
     <Breadcrumb
       items={[

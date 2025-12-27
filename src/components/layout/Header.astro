@@ -1,12 +1,13 @@
 ---
 import ThemeToggle from '../ThemeToggle.astro'
+import { SITE } from '../../lib/constants'
 ---
 
 <header class="border-b" style="background-color: var(--color-bg); border-color: var(--color-border)" data-pagefind-ignore>
   <nav class="max-w-5xl mx-auto flex items-center justify-between py-2 px-4 md:px-0">
     <!-- Logo -->
     <a href="/" class="text-xl font-bold hover:opacity-80 transition-opacity" style="color: var(--color-text-main)">
-      Tech Blog
+      {SITE.NAME}
     </a>
 
     <!-- Desktop Navigation -->

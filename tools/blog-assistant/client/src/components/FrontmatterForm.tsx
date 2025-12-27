@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ArticleFrontmatter } from '@shared/types'
+import { CONTENT_LIMITS } from '@shared/constants/content'
 
 interface FrontmatterFormProps {
   value: ArticleFrontmatter
@@ -50,7 +51,7 @@ export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
   const handleAddTag = useCallback(
     (tag: string) => {
       const trimmedTag = tag.trim()
-      if (trimmedTag && !value.tags.includes(trimmedTag) && value.tags.length < 10) {
+      if (trimmedTag && !value.tags.includes(trimmedTag) && value.tags.length < CONTENT_LIMITS.MAX_TAGS) {
         handleChange('tags', [...value.tags, trimmedTag])
         setTagInput('')
         setIsDropdownOpen(false)
@@ -111,13 +112,13 @@ export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           タイトル
-          <span className="text-gray-400 ml-1">({value.title.length}/200)</span>
+          <span className="text-gray-400 ml-1">({value.title.length}/{CONTENT_LIMITS.TITLE_MAX_LENGTH})</span>
         </label>
         <input
           type="text"
           value={value.title}
           onChange={(e) => handleChange('title', e.target.value)}
-          maxLength={200}
+          maxLength={CONTENT_LIMITS.TITLE_MAX_LENGTH}
           placeholder="記事のタイトル"
           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -127,12 +128,12 @@ export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           説明
-          <span className="text-gray-400 ml-1">({value.description.length}/300)</span>
+          <span className="text-gray-400 ml-1">({value.description.length}/{CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH})</span>
         </label>
         <textarea
           value={value.description}
           onChange={(e) => handleChange('description', e.target.value)}
-          maxLength={300}
+          maxLength={CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH}
           rows={2}
           placeholder="記事の概要（メタディスクリプション）"
           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -156,7 +157,7 @@ export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           タグ
-          <span className="text-gray-400 ml-1">({value.tags.length}/10)</span>
+          <span className="text-gray-400 ml-1">({value.tags.length}/{CONTENT_LIMITS.MAX_TAGS})</span>
         </label>
 
         {/* Tag Input with Dropdown */}
@@ -170,13 +171,13 @@ export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
               onKeyDown={handleTagKeyDown}
               onFocus={handleInputFocus}
               placeholder="タグを検索または入力..."
-              disabled={value.tags.length >= 10}
+              disabled={value.tags.length >= CONTENT_LIMITS.MAX_TAGS}
               className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
             <button
               type="button"
               onClick={() => handleAddTag(tagInput)}
-              disabled={!tagInput.trim() || value.tags.length >= 10}
+              disabled={!tagInput.trim() || value.tags.length >= CONTENT_LIMITS.MAX_TAGS}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               追加
@@ -184,7 +185,7 @@ export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
           </div>
 
           {/* Dropdown */}
-          {isDropdownOpen && value.tags.length < 10 && (
+          {isDropdownOpen && value.tags.length < CONTENT_LIMITS.MAX_TAGS && (
             <div className="absolute z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {filteredTags.length > 0 ? (
                 <>

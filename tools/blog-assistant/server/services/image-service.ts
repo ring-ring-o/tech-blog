@@ -8,10 +8,7 @@ import type {
   ImageUploadResponse,
 } from '../types/index.js'
 import { articleService } from './article-service.js'
-
-// 最適化設定
-const MAX_WIDTH = 1200
-const WEBP_QUALITY = 90
+import { IMAGE_CONFIG, IMAGE_PATHS } from '../../shared/constants/image.js'
 
 /**
  * @deprecated 古い形式。互換性のために残す
@@ -38,13 +35,13 @@ export class ImageService {
     const metadata = await sharp(buffer).metadata()
 
     // リサイズが必要かどうか判定
-    const needsResize = metadata.width && metadata.width > MAX_WIDTH
+    const needsResize = metadata.width && metadata.width > IMAGE_CONFIG.MAX_WIDTH
 
     // 画像を最適化
     let processedImage = sharp(buffer)
 
     if (needsResize) {
-      processedImage = processedImage.resize(MAX_WIDTH, null, {
+      processedImage = processedImage.resize(IMAGE_CONFIG.MAX_WIDTH, null, {
         withoutEnlargement: true,
         fit: 'inside',
       })
@@ -52,7 +49,7 @@ export class ImageService {
 
     // WebPに変換
     const optimizedBuffer = await processedImage
-      .webp({ quality: WEBP_QUALITY })
+      .webp({ quality: IMAGE_CONFIG.WEBP_QUALITY })
       .toBuffer()
 
     // 最適化後のメタデータを取得
@@ -74,12 +71,12 @@ export class ImageService {
       .createHash('md5')
       .update(buffer)
       .digest('hex')
-      .substring(0, 8)
+      .substring(0, IMAGE_CONFIG.HASH_LENGTH)
     const baseName = parse(originalFilename).name
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
-      .substring(0, 30)
+      .substring(0, IMAGE_CONFIG.FILENAME_MAX_LENGTH)
     return `${timestamp}-${baseName}-${hash}.webp`
   }
 
@@ -110,7 +107,7 @@ export class ImageService {
     await writeFile(absolutePath, optimizedBuffer)
 
     // Markdown用の相対パス（./images/filename.webp）
-    const relativePath = `./images/${filename}`
+    const relativePath = `${IMAGE_PATHS.RELATIVE_PREFIX}${filename}`
 
     return {
       success: true,
@@ -137,7 +134,7 @@ export class ImageService {
     const buffer = Buffer.from(base64Clean, 'base64')
     return this.uploadImageToArticle(
       buffer,
-      filename || 'pasted-image.png',
+      filename || IMAGE_PATHS.DEFAULT_PASTE_FILENAME,
       directory,
       slug
     )
@@ -150,7 +147,7 @@ export class ImageService {
     buffer: Buffer,
     originalFilename: string
   ): Promise<ImageUploadResult> {
-    const IMAGES_DIR = '/workspace/public/images/posts'
+    const IMAGES_DIR = IMAGE_PATHS.LEGACY_DIR
 
     // ディレクトリが存在しない場合は作成
     if (!existsSync(IMAGES_DIR)) {
@@ -168,7 +165,7 @@ export class ImageService {
     await writeFile(filePath, optimizedBuffer)
 
     // Markdownで使用するURL（publicディレクトリからの相対パス）
-    const markdownUrl = `/images/posts/${filename}`
+    const markdownUrl = `${IMAGE_PATHS.URL_PREFIX}${filename}`
 
     return {
       filename,

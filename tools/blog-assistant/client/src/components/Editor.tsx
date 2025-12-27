@@ -3,6 +3,7 @@ import { useImageUpload } from '../hooks/useImageUpload'
 import { EditorCommandMenu } from './EditorCommandMenu'
 import { EditorSelectionPopup } from './EditorSelectionPopup'
 import type { Skill, BlogDirectory } from '@shared/types'
+import { EDITOR_CONFIG } from '@shared/constants/ui'
 
 /** 画像を記事フォルダに保存するためのコンテキスト */
 interface ArticleImageContext {
@@ -193,12 +194,11 @@ export function Editor({
         if (cursorPos === 0 || prevChar === '\n' || prevChar === ' ') {
           // カーソル位置を取得
           const rect = textarea.getBoundingClientRect()
-          const lineHeight = 20
           const lines = value.substring(0, cursorPos).split('\n')
           const currentLine = lines.length - 1
-          const y = rect.top + currentLine * lineHeight + 30
+          const y = rect.top + currentLine * EDITOR_CONFIG.LINE_HEIGHT_PX + EDITOR_CONFIG.MENU_OFFSET_Y
 
-          setCommandMenuPosition({ x: rect.left + 16, y: Math.min(y, window.innerHeight - 320) })
+          setCommandMenuPosition({ x: rect.left + EDITOR_CONFIG.MENU_OFFSET_X, y: Math.min(y, window.innerHeight - 320) })
           setSlashPosition(cursorPos)
           setCommandFilter('')
 
@@ -250,7 +250,7 @@ export function Editor({
         textarea.selectionEnd
       )
 
-      if (selection.length > 5) {
+      if (selection.length > EDITOR_CONFIG.SELECTION_MIN_CHARS) {
         setCurrentSelection(selection)
 
         // ブラウザの選択範囲から位置を取得
@@ -278,7 +278,7 @@ export function Editor({
         setSelectionPopupOpen(false)
         setCurrentSelection('')
       }
-    }, 10)
+    }, EDITOR_CONFIG.SELECTION_DETECTION_DELAY)
   }, [])
 
   // コマンドメニューを閉じる

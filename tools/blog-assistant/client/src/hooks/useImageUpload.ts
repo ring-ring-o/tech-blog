@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
-import type { BlogDirectory } from '../../../shared/types'
+import type { BlogDirectory } from '@shared/types'
+import { API_ENDPOINTS } from '@shared/constants/api'
 
 /** 記事コンテキスト（画像を記事フォルダに保存する場合） */
 interface ArticleContext {
@@ -65,7 +66,7 @@ export function useImageUpload(
           formData.append('directory', articleContext.directory)
         }
 
-        const response = await fetch('/api/images/upload', {
+        const response = await fetch(API_ENDPOINTS.IMAGES_UPLOAD, {
           method: 'POST',
           body: formData,
         })
@@ -106,7 +107,7 @@ export function useImageUpload(
           body.directory = articleContext.directory
         }
 
-        const response = await fetch('/api/images/upload', {
+        const response = await fetch(API_ENDPOINTS.IMAGES_UPLOAD, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

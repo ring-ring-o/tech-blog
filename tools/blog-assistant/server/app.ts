@@ -8,6 +8,7 @@ import generateRoute from './routes/generate.js'
 import previewRoute from './routes/preview.js'
 import skillsRoute from './routes/skills.js'
 import imagesRoute from './routes/images.js'
+import { CORS_ORIGINS } from '../shared/constants/server.js'
 
 export const app = new Hono()
 
@@ -16,7 +17,7 @@ app.use('*', logger())
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:4321'],
+    origin: [...CORS_ORIGINS],
     credentials: true,
   })
 )

@@ -4,9 +4,10 @@ import Breadcrumb from '../../components/common/Breadcrumb.astro'
 import Pagination from '../../components/common/Pagination.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { contentRepository } from '../../lib/repositories'
+import { PAGINATION } from '../../lib/constants'
 
 export async function getStaticPaths() {
-  const POSTS_PER_PAGE = 10
+  const { POSTS_PER_PAGE } = PAGINATION
   const allPosts = await contentRepository.getAllPosts()
   const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE)
 

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { ArticleFrontmatter } from '@shared/types'
+import { API_ENDPOINTS } from '@shared/constants/api'
 
 interface UseAIReviewReturn {
   review: (content: string, frontmatter: ArticleFrontmatter) => Promise<void>
@@ -20,7 +21,7 @@ export function useAIReview(): UseAIReviewReturn {
       setStreamingText('')
 
       try {
-        const response = await fetch('/api/review', {
+        const response = await fetch(API_ENDPOINTS.REVIEW, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content, frontmatter }),

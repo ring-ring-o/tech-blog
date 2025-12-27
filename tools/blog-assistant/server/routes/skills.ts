@@ -3,6 +3,7 @@ import { streamSSE } from 'hono/streaming'
 import { query } from '@anthropic-ai/claude-agent-sdk'
 import { skillService } from '../services/skill-service.js'
 import type { SaveSkillRequest, ExecuteSkillRequest, SkillCategory } from '../types/index.js'
+import { AI_MODELS, AI_AGENT_CONFIG } from '../../shared/constants/content.js'
 
 const app = new Hono()
 
@@ -84,9 +85,9 @@ app.post('/:id/execute', async (c) => {
       for await (const message of query({
         prompt: userPrompt,
         options: {
-          model: 'claude-sonnet-4-20250514',
+          model: AI_MODELS.DEFAULT,
           systemPrompt: skill.systemPrompt,
-          maxTurns: 5,
+          maxTurns: AI_AGENT_CONFIG.REVIEW_MAX_TURNS,
           allowedTools: [],
         },
       })) {

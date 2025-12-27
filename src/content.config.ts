@@ -6,6 +6,7 @@
 
 import { defineCollection, z, type ImageFunction } from 'astro:content'
 import { glob } from 'astro/loaders'
+import { CONTENT_LIMITS } from './lib/constants'
 
 /**
  * コンテンツモード
@@ -29,15 +30,15 @@ const blogBase = contentMode === 'production' ? './src/content/blog' : './src/co
 const createBlogSchema = (image: ImageFunction) =>
   z.object({
     /** 記事タイトル */
-    title: z.string().min(1).max(200),
+    title: z.string().min(1).max(CONTENT_LIMITS.TITLE_MAX_LENGTH),
     /** 記事の概要・説明文 */
-    description: z.string().min(1).max(300),
+    description: z.string().min(1).max(CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH),
     /** 公開日（日付文字列から自動変換） */
     publishedAt: z.coerce.date(),
     /** 更新日（任意） */
     updatedAt: z.coerce.date().optional(),
     /** タグ一覧（任意） */
-    tags: z.array(z.string()).max(10).default([]),
+    tags: z.array(z.string()).max(CONTENT_LIMITS.MAX_TAGS).default([]),
     /** 下書きフラグ */
     draft: z.boolean().default(false),
     /** ヒーロー画像（任意、自動最適化対応） */
@@ -83,9 +84,9 @@ const pages = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/pages' }),
   schema: z.object({
     /** ページタイトル */
-    title: z.string().min(1).max(200),
+    title: z.string().min(1).max(CONTENT_LIMITS.TITLE_MAX_LENGTH),
     /** ページの説明文 */
-    description: z.string().min(1).max(300),
+    description: z.string().min(1).max(CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH),
   }),
 })
 

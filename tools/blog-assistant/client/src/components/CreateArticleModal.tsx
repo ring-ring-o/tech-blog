@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { BlogDirectory } from '@shared/types'
+import { API_ENDPOINTS } from '@shared/constants/api'
+import { CONTENT_LIMITS } from '@shared/constants/content'
 
 interface CreateArticleModalProps {
   isOpen: boolean
@@ -31,7 +33,7 @@ export function CreateArticleModal({
     setError(null)
 
     try {
-      const response = await fetch('/api/articles/generate-slug', {
+      const response = await fetch(API_ENDPOINTS.ARTICLES_GENERATE_SLUG, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: targetTitle }),
@@ -97,7 +99,7 @@ export function CreateArticleModal({
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-    .substring(0, 50)
+    .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH)
 
   // 日本語が含まれているかチェック
   const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(slug)

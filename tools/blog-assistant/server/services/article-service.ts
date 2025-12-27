@@ -16,11 +16,13 @@ import type {
   SaveArticleResponse,
   BlogDirectory,
 } from '../types/index.js'
+import {
+  BLOG_DIRECTORIES,
+  FILE_NAMES,
+  CONTENT_LIMITS,
+} from '../../shared/constants/content.js'
 
-const DIRECTORIES: Record<BlogDirectory, string> = {
-  blog: '/workspace/src/content/blog',
-  'blog-demo': '/workspace/src/content/blog-demo',
-}
+const DIRECTORIES: Record<BlogDirectory, string> = BLOG_DIRECTORIES
 
 const BLOG_DIR = DIRECTORIES.blog
 const BLOG_DEMO_DIR = DIRECTORIES['blog-demo']
@@ -57,14 +59,14 @@ export class ArticleService {
     const items = await readdir(dirPath)
 
     for (const item of items) {
-      if (item === '.gitkeep') continue
+      if (item === FILE_NAMES.GITKEEP) continue
 
       const itemPath = join(dirPath, item)
       const itemStat = await stat(itemPath)
 
       if (itemStat.isDirectory()) {
         // フォルダ構造: item/index.md を探す
-        const indexPath = join(itemPath, 'index.md')
+        const indexPath = join(itemPath, FILE_NAMES.INDEX_MD)
         if (existsSync(indexPath)) {
           entries.push({
             path: indexPath,
@@ -73,7 +75,7 @@ export class ArticleService {
             slug: item,
           })
         }
-      } else if (item.endsWith('.md')) {
+      } else if (item.endsWith(FILE_NAMES.MD_EXTENSION)) {
         // フラットファイル構造
         entries.push({
           path: itemPath,
@@ -244,11 +246,11 @@ export class ArticleService {
       await mkdir(articleDir, { recursive: true })
 
       // 画像用フォルダも作成
-      const imagesDir = join(articleDir, 'images')
+      const imagesDir = join(articleDir, FILE_NAMES.IMAGES_DIR)
       await mkdir(imagesDir, { recursive: true })
 
-      filename = `${folderSlug}/index.md`
-      filePath = join(articleDir, 'index.md')
+      filename = `${folderSlug}/${FILE_NAMES.INDEX_MD}`
+      filePath = join(articleDir, FILE_NAMES.INDEX_MD)
       slug = folderSlug
     }
 
@@ -268,7 +270,7 @@ export class ArticleService {
    */
   getArticleImagesDir(directory: BlogDirectory, slug: string): string {
     const dirPath = this.getDirectoryPath(directory)
-    return join(dirPath, slug, 'images')
+    return join(dirPath, slug, FILE_NAMES.IMAGES_DIR)
   }
 
   /**
@@ -335,7 +337,7 @@ export class ArticleService {
     // デモ記事からもタグを収集
     if (existsSync(BLOG_DEMO_DIR)) {
       const files = await readdir(BLOG_DEMO_DIR)
-      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== '.gitkeep')
+      const mdFiles = files.filter((f) => f.endsWith(FILE_NAMES.MD_EXTENSION) && f !== FILE_NAMES.GITKEEP)
 
       for (const filename of mdFiles) {
         try {
@@ -366,7 +368,7 @@ export class ArticleService {
       .toLowerCase()
       .replace(/[^a-z0-9\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .substring(0, 50)
+      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH)
   }
 }
 
