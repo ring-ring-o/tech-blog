@@ -70,13 +70,13 @@ export function SaveModal({
       setTranslatedSlug('')
       setError(null)
 
-      // 自動翻訳がONの場合はAIでスラッグを生成
-      if (autoTranslate && title.trim()) {
+      // 自動翻訳がONの場合はAIでスラッグを生成（新規作成時のみ）
+      if (!isUpdate && autoTranslate && title.trim()) {
         generateSlug(title)
       }
     }
     prevIsOpen.current = isOpen
-  }, [isOpen, title, autoTranslate, generateSlug])
+  }, [isOpen, title, autoTranslate, generateSlug, isUpdate])
 
   // 自動翻訳トグルがONに変更された時
   const handleAutoTranslateToggle = () => {
