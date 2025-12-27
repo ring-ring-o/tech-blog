@@ -11,7 +11,7 @@ import { articleService } from './article-service.js'
 
 // 最適化設定
 const MAX_WIDTH = 1200
-const WEBP_QUALITY = 85
+const WEBP_QUALITY = 90
 
 /**
  * @deprecated 古い形式。互換性のために残す
