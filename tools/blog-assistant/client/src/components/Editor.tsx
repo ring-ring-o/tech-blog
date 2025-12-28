@@ -18,6 +18,8 @@ interface EditorProps {
   onExecuteSkill?: (skill: Skill, selection: string) => void
   onReview?: () => void
   onGenerateDraft?: () => void
+  onGenerateDescription?: () => void
+  onSuggestTags?: () => void
   /** 記事の画像コンテキスト（既存記事または新規作成済み記事） */
   articleImageContext?: ArticleImageContext | null
 }
@@ -29,6 +31,8 @@ export function Editor({
   onExecuteSkill,
   onReview,
   onGenerateDraft,
+  onGenerateDescription,
+  onSuggestTags,
   articleImageContext,
 }: EditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -331,6 +335,22 @@ export function Editor({
     }
   }, [onGenerateDraft, handleCloseCommandMenu])
 
+  // 説明生成
+  const handleGenerateDescription = useCallback(() => {
+    handleCloseCommandMenu()
+    if (onGenerateDescription) {
+      onGenerateDescription()
+    }
+  }, [onGenerateDescription, handleCloseCommandMenu])
+
+  // タグ提案
+  const handleSuggestTags = useCallback(() => {
+    handleCloseCommandMenu()
+    if (onSuggestTags) {
+      onSuggestTags()
+    }
+  }, [onSuggestTags, handleCloseCommandMenu])
+
   // 画像挿入
   const handleInsertImage = useCallback(() => {
     handleCloseCommandMenu()
@@ -444,6 +464,8 @@ export function Editor({
         onInsertImage={handleInsertImage}
         onReview={handleReview}
         onGenerateDraft={handleGenerateDraft}
+        onGenerateDescription={handleGenerateDescription}
+        onSuggestTags={handleSuggestTags}
       />
 
       {/* 選択ポップアップ */}

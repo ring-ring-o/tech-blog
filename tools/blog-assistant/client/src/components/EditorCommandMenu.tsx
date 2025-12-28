@@ -20,6 +20,8 @@ interface EditorCommandMenuProps {
   onInsertImage: () => void
   onReview: () => void
   onGenerateDraft: () => void
+  onGenerateDescription: () => void
+  onSuggestTags: () => void
 }
 
 const categoryLabels = {
@@ -38,6 +40,8 @@ export function EditorCommandMenu({
   onInsertImage,
   onReview,
   onGenerateDraft,
+  onGenerateDescription,
+  onSuggestTags,
 }: EditorCommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -68,6 +72,30 @@ export function EditorCommandMenu({
       ),
       category: 'ai',
       action: onGenerateDraft,
+    },
+    {
+      id: 'generate-description',
+      label: '説明生成',
+      description: '記事内容から説明文を生成',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+      ),
+      category: 'ai',
+      action: onGenerateDescription,
+    },
+    {
+      id: 'suggest-tags',
+      label: 'タグ提案',
+      description: '記事内容から推奨タグを提案',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
+      category: 'ai',
+      action: onSuggestTags,
     },
     // スキル
     ...skills.map((skill) => ({

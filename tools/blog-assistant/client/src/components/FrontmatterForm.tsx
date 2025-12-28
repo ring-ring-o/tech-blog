@@ -1,33 +1,19 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ArticleFrontmatter } from '@shared/types'
 import { CONTENT_LIMITS } from '@shared/constants/content'
-import { API_ENDPOINTS } from '@shared/constants/api'
-import { useTagSuggestions } from '../hooks/useTagSuggestions'
 
 interface FrontmatterFormProps {
   value: ArticleFrontmatter
   onChange: (value: ArticleFrontmatter) => void
-  /** 記事本文（タグ推奨に使用） */
-  content?: string
 }
 
-export function FrontmatterForm({ value, onChange, content }: FrontmatterFormProps) {
+export function FrontmatterForm({ value, onChange }: FrontmatterFormProps) {
   const [tagInput, setTagInput] = useState('')
   const [existingTags, setExistingTags] = useState<string[]>([])
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  const {
-    suggestions,
-    isLoading: isSuggestingTags,
-    error: suggestError,
-    fetchSuggestions,
-    clearSuggestions,
-  } = useTagSuggestions()
 
   useEffect(() => {
     fetch('/api/articles/tags')
@@ -120,52 +106,6 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
     setIsDropdownOpen(true)
   }
 
-  const handleSuggestTags = useCallback(async () => {
-    if (!value.title || !content) return
-    setShowSuggestions(true)
-    await fetchSuggestions(value.title, content)
-  }, [value.title, content, fetchSuggestions])
-
-  const handleAddSuggestedTag = useCallback(
-    (tag: string) => {
-      if (!value.tags.includes(tag) && value.tags.length < CONTENT_LIMITS.MAX_TAGS) {
-        handleChange('tags', [...value.tags, tag])
-      }
-    },
-    [value.tags, handleChange]
-  )
-
-  const handleCloseSuggestions = useCallback(() => {
-    setShowSuggestions(false)
-    clearSuggestions()
-  }, [clearSuggestions])
-
-  const handleGenerateDescription = useCallback(async () => {
-    if (!value.title || !content) return
-
-    setIsGeneratingDescription(true)
-    try {
-      const response = await fetch(API_ENDPOINTS.ARTICLES_GENERATE_DESCRIPTION, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: value.title, content }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate description')
-      }
-
-      const data = await response.json()
-      if (data.description) {
-        handleChange('description', data.description)
-      }
-    } catch (error) {
-      console.error('Description generation error:', error)
-    } finally {
-      setIsGeneratingDescription(false)
-    }
-  }, [value.title, content, handleChange])
-
   return (
     <div className="space-y-4">
       {/* Title */}
@@ -186,36 +126,10 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
 
       {/* Description */}
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">
-            説明
-            <span className="text-gray-400 ml-1">({value.description.length}/{CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH})</span>
-          </label>
-          <button
-            type="button"
-            onClick={handleGenerateDescription}
-            disabled={!value.title || !content || isGeneratingDescription}
-            className="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-            title="AIが説明文を生成します"
-          >
-            {isGeneratingDescription ? (
-              <>
-                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <span>生成中...</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>AI生成</span>
-              </>
-            )}
-          </button>
-        </div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          説明
+          <span className="text-gray-400 ml-1">({value.description.length}/{CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH})</span>
+        </label>
         <textarea
           value={value.description}
           onChange={(e) => handleChange('description', e.target.value)}
@@ -268,30 +182,6 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
             >
               追加
             </button>
-            <button
-              type="button"
-              onClick={handleSuggestTags}
-              disabled={!value.title || !content || isSuggestingTags || value.tags.length >= CONTENT_LIMITS.MAX_TAGS}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-              title="AIがタグを推奨します"
-            >
-              {isSuggestingTags ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>推奨中...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>AI推奨</span>
-                </>
-              )}
-            </button>
           </div>
 
           {/* Dropdown */}
@@ -331,77 +221,6 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
             </div>
           )}
         </div>
-
-        {/* AI推奨タグ */}
-        {showSuggestions && (
-          <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-purple-700">AI推奨タグ</span>
-              <button
-                type="button"
-                onClick={handleCloseSuggestions}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            {suggestError ? (
-              <p className="text-sm text-red-600">{suggestError.message}</p>
-            ) : suggestions.length > 0 ? (
-              <div className="space-y-2">
-                {suggestions.map((suggestion) => {
-                  const isAlreadyAdded = value.tags.includes(suggestion.tag)
-                  return (
-                    <div
-                      key={suggestion.tag}
-                      className={`flex items-start gap-2 p-2 rounded ${
-                        isAlreadyAdded ? 'bg-gray-100 opacity-60' : 'bg-white'
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleAddSuggestedTag(suggestion.tag)}
-                        disabled={isAlreadyAdded || value.tags.length >= CONTENT_LIMITS.MAX_TAGS}
-                        className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center ${
-                          isAlreadyAdded
-                            ? 'bg-blue-500 border-blue-500 text-white'
-                            : 'border-gray-300 hover:border-purple-500'
-                        } disabled:cursor-not-allowed`}
-                      >
-                        {isAlreadyAdded && (
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{suggestion.tag}</span>
-                          <span
-                            className={`text-xs px-1.5 py-0.5 rounded ${
-                              suggestion.isExisting
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700'
-                            }`}
-                          >
-                            {suggestion.isExisting ? '既存' : '新規'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5">{suggestion.reason}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : isSuggestingTags ? (
-              <p className="text-sm text-gray-500">タグを分析中...</p>
-            ) : (
-              <p className="text-sm text-gray-500">推奨タグがありません</p>
-            )}
-          </div>
-        )}
 
         {/* 選択済みタグ */}
         {value.tags.length > 0 && (

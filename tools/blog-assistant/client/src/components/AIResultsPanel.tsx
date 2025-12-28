@@ -1,13 +1,17 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import type { TagSuggestion } from '@shared/types'
 
 export interface AIResult {
   id: string
-  type: 'review' | 'generate' | 'skill'
+  type: 'review' | 'generate' | 'skill' | 'description' | 'tags'
   title: string
   content: string
   timestamp: Date
   canApply: boolean
+  /** タグ提案の場合の詳細データ */
+  tagSuggestions?: TagSuggestion[]
 }
 
 interface AIResultsPanelProps {
@@ -15,8 +19,134 @@ interface AIResultsPanelProps {
   isLoading: boolean
   loadingTitle?: string
   streamingContent?: string
-  onApply: (result: AIResult) => void
+  onApply: (result: AIResult, selectedTags?: string[]) => void
   onClear: () => void
+}
+
+// タイプに応じたラベルとスタイル
+const typeConfig = {
+  review: { label: '校閲', className: 'bg-blue-100 text-blue-700' },
+  generate: { label: '生成', className: 'bg-purple-100 text-purple-700' },
+  skill: { label: 'スキル', className: 'bg-green-100 text-green-700' },
+  description: { label: '説明', className: 'bg-amber-100 text-amber-700' },
+  tags: { label: 'タグ', className: 'bg-teal-100 text-teal-700' },
+}
+
+interface ResultItemProps {
+  result: AIResult
+  onApply: (result: AIResult, selectedTags?: string[]) => void
+}
+
+function ResultItem({ result, onApply }: ResultItemProps) {
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    result.tagSuggestions?.map((s) => s.tag) || []
+  )
+
+  const config = typeConfig[result.type]
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (result.tagSuggestions) {
+      setSelectedTags(result.tagSuggestions.map((s) => s.tag))
+    }
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedTags([])
+  }
+
+  return (
+    <div className="p-4 border-b">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 text-xs rounded ${config.className}`}>
+            {config.label}
+          </span>
+          <span className="text-sm font-medium text-gray-700">{result.title}</span>
+        </div>
+        <span className="text-xs text-gray-400">
+          {result.timestamp.toLocaleTimeString()}
+        </span>
+      </div>
+
+      {/* タグ提案の場合は特別なUI */}
+      {result.type === 'tags' && result.tagSuggestions ? (
+        <div className="mb-3">
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={handleSelectAll}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              すべて選択
+            </button>
+            <button
+              onClick={handleDeselectAll}
+              className="text-xs text-gray-500 hover:underline"
+            >
+              すべて解除
+            </button>
+          </div>
+          <div className="space-y-2">
+            {result.tagSuggestions.map((suggestion) => (
+              <label
+                key={suggestion.tag}
+                className="flex items-start gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedTags.includes(suggestion.tag)}
+                  onChange={() => handleTagToggle(suggestion.tag)}
+                  className="mt-1 rounded text-blue-600 focus:ring-blue-500"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">{suggestion.tag}</span>
+                    {suggestion.isExisting && (
+                      <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-600 rounded">
+                        既存
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">{suggestion.reason}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="prose prose-sm max-w-none text-gray-700 mb-3">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => navigator.clipboard.writeText(result.content)}
+          className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded border"
+        >
+          コピー
+        </button>
+        {result.canApply && (
+          <button
+            onClick={() => onApply(result, result.type === 'tags' ? selectedTags : undefined)}
+            disabled={result.type === 'tags' && selectedTags.length === 0}
+            className="px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {result.type === 'description'
+              ? '説明に適用'
+              : result.type === 'tags'
+                ? `タグを追加 (${selectedTags.length}件)`
+                : '記事に適用'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function AIResultsPanel({
@@ -93,54 +223,7 @@ export function AIResultsPanel({
 
         {/* Past results */}
         {results.map((result) => (
-          <div key={result.id} className="p-4 border-b">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-0.5 text-xs rounded ${
-                    result.type === 'review'
-                      ? 'bg-blue-100 text-blue-700'
-                      : result.type === 'generate'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-green-100 text-green-700'
-                  }`}
-                >
-                  {result.type === 'review'
-                    ? '校閲'
-                    : result.type === 'generate'
-                      ? '生成'
-                      : 'スキル'}
-                </span>
-                <span className="text-sm font-medium text-gray-700">
-                  {result.title}
-                </span>
-              </div>
-              <span className="text-xs text-gray-400">
-                {result.timestamp.toLocaleTimeString()}
-              </span>
-            </div>
-            <div className="prose prose-sm max-w-none text-gray-700 mb-3">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {result.content}
-              </ReactMarkdown>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigator.clipboard.writeText(result.content)}
-                className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded border"
-              >
-                コピー
-              </button>
-              {result.canApply && (
-                <button
-                  onClick={() => onApply(result)}
-                  className="px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded"
-                >
-                  記事に適用
-                </button>
-              )}
-            </div>
-          </div>
+          <ResultItem key={result.id} result={result} onApply={onApply} />
         ))}
       </div>
     </div>

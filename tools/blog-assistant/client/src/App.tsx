@@ -13,8 +13,9 @@ import { useAIReview } from './hooks/useAIReview'
 import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
 import { useSkills } from './hooks/useSkills'
-import type { ArticleFrontmatter, BlogDirectory, Article, Skill, SaveSkillRequest } from '@shared/types'
+import type { ArticleFrontmatter, BlogDirectory, Article, Skill, SaveSkillRequest, TagSuggestion } from '@shared/types'
 import { PANEL_CONFIG } from '@shared/constants/ui'
+import { API_ENDPOINTS } from '@shared/constants/api'
 
 const defaultFrontmatter: ArticleFrontmatter = {
   title: '',
@@ -54,6 +55,10 @@ export default function App() {
 
   // AI結果
   const [aiResults, setAiResults] = useState<AIResult[]>([])
+
+  // 説明生成とタグ提案の状態
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
+  const [isSuggestingTags, setIsSuggestingTags] = useState(false)
 
   // 下書き生成用トピック入力
   const [showTopicInput, setShowTopicInput] = useState(false)
@@ -201,8 +206,110 @@ export default function App() {
     }
   }, [isGenerating, generateText])
 
+  // 説明生成
+  const handleGenerateDescription = useCallback(async () => {
+    if (!content || !frontmatter.title) return
+    setActiveTab('results')
+    setIsRightPaneCollapsed(false)
+    setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+    setIsGeneratingDescription(true)
+
+    try {
+      const response = await fetch(API_ENDPOINTS.ARTICLES_GENERATE_DESCRIPTION, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: frontmatter.title, content }),
+      })
+
+      if (!response.ok) throw new Error('説明の生成に失敗しました')
+
+      const data = await response.json()
+      setAiResults((prev) => [
+        {
+          id: `description-${Date.now()}`,
+          type: 'description',
+          title: '説明文の生成',
+          content: data.description,
+          timestamp: new Date(),
+          canApply: true,
+        },
+        ...prev,
+      ])
+    } catch (error) {
+      console.error('Failed to generate description:', error)
+      setAiResults((prev) => [
+        {
+          id: `description-error-${Date.now()}`,
+          type: 'description',
+          title: '説明文の生成エラー',
+          content: error instanceof Error ? error.message : '説明の生成に失敗しました',
+          timestamp: new Date(),
+          canApply: false,
+        },
+        ...prev,
+      ])
+    } finally {
+      setIsGeneratingDescription(false)
+    }
+  }, [content, frontmatter.title])
+
+  // タグ提案
+  const handleSuggestTags = useCallback(async () => {
+    if (!content || !frontmatter.title) return
+    setActiveTab('results')
+    setIsRightPaneCollapsed(false)
+    setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+    setIsSuggestingTags(true)
+
+    try {
+      const response = await fetch(API_ENDPOINTS.ARTICLES_SUGGEST_TAGS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: frontmatter.title, content }),
+      })
+
+      if (!response.ok) throw new Error('タグの提案に失敗しました')
+
+      const data = await response.json()
+      const suggestions: TagSuggestion[] = data.suggestions
+
+      // 既に設定されているタグを除外
+      const filteredSuggestions = suggestions.filter(
+        (s) => !frontmatter.tags.includes(s.tag)
+      )
+
+      setAiResults((prev) => [
+        {
+          id: `tags-${Date.now()}`,
+          type: 'tags',
+          title: 'タグの提案',
+          content: filteredSuggestions.map((s) => `- **${s.tag}**: ${s.reason}`).join('\n'),
+          timestamp: new Date(),
+          canApply: filteredSuggestions.length > 0,
+          tagSuggestions: filteredSuggestions,
+        },
+        ...prev,
+      ])
+    } catch (error) {
+      console.error('Failed to suggest tags:', error)
+      setAiResults((prev) => [
+        {
+          id: `tags-error-${Date.now()}`,
+          type: 'tags',
+          title: 'タグ提案エラー',
+          content: error instanceof Error ? error.message : 'タグの提案に失敗しました',
+          timestamp: new Date(),
+          canApply: false,
+        },
+        ...prev,
+      ])
+    } finally {
+      setIsSuggestingTags(false)
+    }
+  }, [content, frontmatter.title, frontmatter.tags])
+
   // AI結果を適用
-  const handleApplyResult = useCallback((result: AIResult) => {
+  const handleApplyResult = useCallback((result: AIResult, selectedTags?: string[]) => {
     if (result.type === 'generate') {
       // Frontmatterと本文を解析して適用
       const text = result.content
@@ -242,6 +349,18 @@ export default function App() {
       } else {
         setContent((prev) => prev + '\n\n' + result.content)
       }
+    } else if (result.type === 'description') {
+      // 説明文を適用
+      setFrontmatter((prev) => ({
+        ...prev,
+        description: result.content,
+      }))
+    } else if (result.type === 'tags' && selectedTags && selectedTags.length > 0) {
+      // 選択されたタグを追加
+      setFrontmatter((prev) => ({
+        ...prev,
+        tags: [...prev.tags, ...selectedTags.filter((t) => !prev.tags.includes(t))],
+      }))
     }
     setActiveTab('preview')
   }, [editorSelection])
@@ -383,7 +502,16 @@ export default function App() {
 
   // 現在ストリーミング中のコンテンツ
   const streamingContent = isReviewing ? reviewText : isGenerating ? generateText : undefined
-  const loadingTitle = isReviewing ? '校閲中...' : isGenerating ? '下書き生成中...' : undefined
+  const loadingTitle = isReviewing
+    ? '校閲中...'
+    : isGenerating
+      ? '下書き生成中...'
+      : isGeneratingDescription
+        ? '説明を生成中...'
+        : isSuggestingTags
+          ? 'タグを提案中...'
+          : undefined
+  const isAnyAILoading = isReviewing || isGenerating || isGeneratingDescription || isSuggestingTags
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -659,7 +787,7 @@ export default function App() {
                 </button>
                 {!isFrontmatterCollapsed && (
                   <div className="p-4">
-                    <FrontmatterForm value={frontmatter} onChange={setFrontmatter} content={content} />
+                    <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
                   </div>
                 )}
               </div>
@@ -673,6 +801,8 @@ export default function App() {
                   onExecuteSkill={handleExecuteSkill}
                   onReview={handleReview}
                   onGenerateDraft={handleGenerateDraft}
+                  onGenerateDescription={handleGenerateDescription}
+                  onSuggestTags={handleSuggestTags}
                   articleImageContext={{
                     slug: editingArticle.slug,
                     directory: editingArticle.directory,
@@ -811,7 +941,7 @@ export default function App() {
               {activeTab === 'results' && (
                 <AIResultsPanel
                   results={aiResults}
-                  isLoading={isReviewing || isGenerating}
+                  isLoading={isAnyAILoading}
                   loadingTitle={loadingTitle}
                   streamingContent={streamingContent}
                   onApply={handleApplyResult}
