@@ -340,3 +340,66 @@ ${existingTags.length > 0 ? existingTags.join(", ") : "なし"}
     return [];
   }
 }
+
+/**
+ * 記事の説明文を生成
+ */
+export async function generateDescription(
+  title: string,
+  content: string
+): Promise<string> {
+  // 本文が長い場合は先頭部分のみ使用
+  const contentExcerpt = content.slice(0, 3000);
+
+  const prompt = `
+以下のブログ記事の説明文（メタディスクリプション）を生成してください。
+
+## タイトル
+${title}
+
+## 本文（抜粋）
+${contentExcerpt}
+
+## ルール
+1. 記事の内容を簡潔に要約してください
+2. 最大${CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH}文字以内に収めてください
+3. SEOを意識し、検索結果で表示されることを想定してください
+4. 読者が記事を読みたくなるような魅力的な説明にしてください
+5. 「〜について解説します」「〜を紹介します」などの形式が適切です
+
+## 出力形式
+説明文のみを出力してください。前置きや補足説明は不要です。
+`;
+
+  try {
+    let description = "";
+    for await (const message of query({
+      prompt,
+      options: {
+        model: AI_MODELS.DEFAULT,
+        systemPrompt:
+          "You are a blog meta description generator. Output only the description text in Japanese, nothing else.",
+        maxTurns: AI_AGENT_CONFIG.SLUG_GENERATION_MAX_TURNS,
+        allowedTools: [],
+      },
+    })) {
+      if (message.type === "assistant" && message.message?.content) {
+        for (const block of message.message.content) {
+          if ("text" in block) {
+            description += block.text;
+          }
+        }
+      }
+    }
+
+    // クリーンアップ: 余分な空白や改行を除去し、最大文字数に制限
+    return description
+      .trim()
+      .replace(/\n+/g, " ")
+      .replace(/\s+/g, " ")
+      .substring(0, CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH);
+  } catch (error) {
+    console.error("generateDescription error:", error);
+    return "";
+  }
+}

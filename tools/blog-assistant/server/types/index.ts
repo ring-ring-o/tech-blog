@@ -16,4 +16,6 @@ export type {
   TagSuggestion,
   SuggestTagsRequest,
   SuggestTagsResponse,
+  GenerateDescriptionRequest,
+  GenerateDescriptionResponse,
 } from '../../shared/types.js'

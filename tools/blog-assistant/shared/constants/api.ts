@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   ARTICLES_TAGS: '/api/articles/tags',
   ARTICLES_GENERATE_SLUG: '/api/articles/generate-slug',
   ARTICLES_SUGGEST_TAGS: '/api/articles/suggest-tags',
+  ARTICLES_GENERATE_DESCRIPTION: '/api/articles/generate-description',
   REVIEW: '/api/review',
   GENERATE: '/api/generate',
   PREVIEW: '/api/preview',

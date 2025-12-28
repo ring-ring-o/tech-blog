@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ArticleFrontmatter } from '@shared/types'
 import { CONTENT_LIMITS } from '@shared/constants/content'
+import { API_ENDPOINTS } from '@shared/constants/api'
 import { useTagSuggestions } from '../hooks/useTagSuggestions'
 
 interface FrontmatterFormProps {
@@ -16,6 +17,7 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -138,6 +140,32 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
     clearSuggestions()
   }, [clearSuggestions])
 
+  const handleGenerateDescription = useCallback(async () => {
+    if (!value.title || !content) return
+
+    setIsGeneratingDescription(true)
+    try {
+      const response = await fetch(API_ENDPOINTS.ARTICLES_GENERATE_DESCRIPTION, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: value.title, content }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate description')
+      }
+
+      const data = await response.json()
+      if (data.description) {
+        handleChange('description', data.description)
+      }
+    } catch (error) {
+      console.error('Description generation error:', error)
+    } finally {
+      setIsGeneratingDescription(false)
+    }
+  }, [value.title, content, handleChange])
+
   return (
     <div className="space-y-4">
       {/* Title */}
@@ -158,10 +186,36 @@ export function FrontmatterForm({ value, onChange, content }: FrontmatterFormPro
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          説明
-          <span className="text-gray-400 ml-1">({value.description.length}/{CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH})</span>
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">
+            説明
+            <span className="text-gray-400 ml-1">({value.description.length}/{CONTENT_LIMITS.DESCRIPTION_MAX_LENGTH})</span>
+          </label>
+          <button
+            type="button"
+            onClick={handleGenerateDescription}
+            disabled={!value.title || !content || isGeneratingDescription}
+            className="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            title="AIが説明文を生成します"
+          >
+            {isGeneratingDescription ? (
+              <>
+                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>生成中...</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>AI生成</span>
+              </>
+            )}
+          </button>
+        </div>
         <textarea
           value={value.description}
           onChange={(e) => handleChange('description', e.target.value)}

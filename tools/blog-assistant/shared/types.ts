@@ -179,3 +179,18 @@ export interface SuggestTagsRequest {
 export interface SuggestTagsResponse {
   suggestions: TagSuggestion[]
 }
+
+/**
+ * 説明文生成リクエスト
+ */
+export interface GenerateDescriptionRequest {
+  title: string
+  content: string
+}
+
+/**
+ * 説明文生成レスポンス
+ */
+export interface GenerateDescriptionResponse {
+  description: string
+}

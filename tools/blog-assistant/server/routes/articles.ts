@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { articleService } from '../services/article-service.js'
-import { generateSlug, suggestTags } from '../services/claude-agent.js'
-import type { SaveArticleRequest, BlogDirectory, SuggestTagsRequest } from '../types/index.js'
+import { generateSlug, suggestTags, generateDescription } from '../services/claude-agent.js'
+import type { SaveArticleRequest, BlogDirectory, SuggestTagsRequest, GenerateDescriptionRequest } from '../types/index.js'
 
 const app = new Hono()
 
@@ -47,6 +47,20 @@ app.post('/suggest-tags', async (c) => {
   const suggestions = await suggestTags(title, content, existingTags)
 
   return c.json({ suggestions })
+})
+
+// 説明文を生成
+app.post('/generate-description', async (c) => {
+  const body = (await c.req.json()) as GenerateDescriptionRequest
+  const { title, content } = body
+
+  if (!title || !content) {
+    return c.json({ error: 'Title and content are required' }, 400)
+  }
+
+  const description = await generateDescription(title, content)
+
+  return c.json({ description })
 })
 
 // 記事を取得
