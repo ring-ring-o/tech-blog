@@ -1,5 +1,5 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
-import type { ArticleFrontmatter } from "../types/index.js";
+import type { ArticleFrontmatter, TagSuggestion } from "../types/index.js";
 import {
   AI_MODELS,
   AI_AGENT_CONFIG,
@@ -256,5 +256,87 @@ SEOを意識した読みやすい技術記事を執筆してください。
       type: "error" as const,
       message: error instanceof Error ? error.message : "Unknown error",
     };
+  }
+}
+
+/**
+ * 記事内容からタグを推奨
+ */
+export async function suggestTags(
+  title: string,
+  content: string,
+  existingTags: string[]
+): Promise<TagSuggestion[]> {
+  // 本文が長い場合は先頭部分のみ使用
+  const contentExcerpt = content.slice(0, 2000);
+
+  const prompt = `
+以下のブログ記事に適切なタグを提案してください。
+
+## タイトル
+${title}
+
+## 本文（抜粋）
+${contentExcerpt}
+
+## 既存のタグ一覧（ブログ全体で使用されているタグ）
+${existingTags.length > 0 ? existingTags.join(", ") : "なし"}
+
+## ルール
+1. 記事の内容に最も適したタグを3〜5個提案してください
+2. 既存のタグ一覧に合致するものがあれば、できるだけそれを優先してください
+3. 既存タグにないが、記事内容に適切な新しいタグも提案できます
+4. 各タグには、なぜそのタグが適切かの理由を簡潔に添えてください
+5. 既存タグか新規タグかを明示してください
+
+## 出力形式
+以下のJSON形式で出力してください。説明や前置きは不要です。
+[
+  {"tag": "タグ名", "reason": "理由", "isExisting": true},
+  {"tag": "タグ名", "reason": "理由", "isExisting": false}
+]
+`;
+
+  try {
+    let result = "";
+    for await (const message of query({
+      prompt,
+      options: {
+        model: AI_MODELS.DEFAULT,
+        systemPrompt:
+          "You are a blog tag suggestion assistant. Output only valid JSON array, nothing else.",
+        maxTurns: AI_AGENT_CONFIG.SLUG_GENERATION_MAX_TURNS,
+        allowedTools: [],
+      },
+    })) {
+      if (message.type === "assistant" && message.message?.content) {
+        for (const block of message.message.content) {
+          if ("text" in block) {
+            result += block.text;
+          }
+        }
+      }
+    }
+
+    // JSONをパース
+    const jsonMatch = result.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error("Invalid JSON response");
+    }
+
+    const suggestions: TagSuggestion[] = JSON.parse(jsonMatch[0]);
+
+    // バリデーション
+    return suggestions
+      .filter(
+        (s) =>
+          typeof s.tag === "string" &&
+          typeof s.reason === "string" &&
+          typeof s.isExisting === "boolean"
+      )
+      .slice(0, 5);
+  } catch (error) {
+    console.error("suggestTags error:", error);
+    return [];
   }
 }

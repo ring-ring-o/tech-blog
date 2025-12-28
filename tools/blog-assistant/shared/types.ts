@@ -152,3 +152,30 @@ export interface ImageUploadResponse {
   /** ファイルサイズ（バイト） */
   size: number
 }
+
+/**
+ * タグ提案
+ */
+export interface TagSuggestion {
+  /** 提案されたタグ名 */
+  tag: string
+  /** 提案理由 */
+  reason: string
+  /** 既存タグかどうか */
+  isExisting: boolean
+}
+
+/**
+ * タグ提案リクエスト
+ */
+export interface SuggestTagsRequest {
+  title: string
+  content: string
+}
+
+/**
+ * タグ提案レスポンス
+ */
+export interface SuggestTagsResponse {
+  suggestions: TagSuggestion[]
+}

@@ -13,4 +13,7 @@ export type {
   SaveSkillRequest,
   ImageUploadRequest,
   ImageUploadResponse,
+  TagSuggestion,
+  SuggestTagsRequest,
+  SuggestTagsResponse,
 } from '../../shared/types.js'
