@@ -201,6 +201,72 @@ ${COMMON_INSTRUCTIONS}`,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
+  {
+    id: 'generate-description',
+    name: '説明生成',
+    description: '記事内容からメタディスクリプションを生成します',
+    category: 'meta',
+    systemPrompt: `あなたは技術ブログのSEO専門家です。
+記事のタイトルと内容から、検索エンジン最適化された説明文（メタディスクリプション）を生成してください。
+${COMMON_INSTRUCTIONS}`,
+    userPromptTemplate: `以下の記事から、SEOに最適化されたメタディスクリプション（説明文）を生成してください。
+
+## タイトル
+{{title}}
+
+## 記事内容
+{{content}}
+
+## 生成ルール
+- 最大300文字以内で生成してください
+- 記事の主要なポイントを簡潔にまとめてください
+- 検索結果で魅力的に見える文章にしてください
+- 記事の価値や読者が得られるメリットを含めてください
+- 絵文字は使用しないでください
+- 「ですます調」で統一してください
+
+説明文のみを出力してください（他の説明や補足は不要です）。`,
+    variables: ['title', 'content'],
+    isBuiltIn: true,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'suggest-tags',
+    name: 'タグ提案',
+    description: '記事内容から適切なタグを提案します',
+    category: 'meta',
+    systemPrompt: `あなたは技術ブログのカテゴリ分類専門家です。
+記事の内容から適切なタグを提案してください。
+既存のタグがある場合は、それらを優先的に使用してください。
+${COMMON_INSTRUCTIONS}`,
+    userPromptTemplate: `以下の記事に適切なタグを提案してください。
+
+## タイトル
+{{title}}
+
+## 記事内容
+{{content}}
+
+## 既存のタグ一覧
+{{existingTags}}
+
+## 提案ルール
+- 3〜5個のタグを提案してください
+- 既存のタグがある場合は優先的に使用してください
+- 新しいタグを提案する場合は、その理由も説明してください
+- タグは短く、具体的なものにしてください
+- 技術用語や概念を表すタグを優先してください
+
+以下のJSON形式で出力してください：
+[
+  { "tag": "タグ名", "reason": "選定理由", "isExisting": true/false }
+]`,
+    variables: ['title', 'content', 'existingTags'],
+    isBuiltIn: true,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
 ]
 
 export class SkillService {

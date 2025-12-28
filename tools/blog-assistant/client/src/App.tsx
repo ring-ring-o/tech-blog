@@ -479,9 +479,18 @@ export default function App() {
 
   // スキル実行（エディタから）
   const handleExecuteSkill = useCallback((skill: Skill, selection: string) => {
+    // 特殊なメタスキルは専用ハンドラを使用
+    if (skill.id === 'generate-description') {
+      handleGenerateDescription()
+      return
+    }
+    if (skill.id === 'suggest-tags') {
+      handleSuggestTags()
+      return
+    }
     setEditorSelection(selection)
     setExecutingSkill(skill)
-  }, [])
+  }, [handleGenerateDescription, handleSuggestTags])
 
   // スキル結果を適用
   const handleApplySkillResult = useCallback((result: string) => {

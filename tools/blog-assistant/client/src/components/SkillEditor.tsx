@@ -13,6 +13,7 @@ const categoryOptions: { value: SkillCategory; label: string }[] = [
   { value: 'review', label: '校閲' },
   { value: 'generate', label: '生成' },
   { value: 'assist', label: '補助' },
+  { value: 'meta', label: 'メタ情報' },
 ]
 
 export function SkillEditor({

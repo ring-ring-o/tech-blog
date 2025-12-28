@@ -84,7 +84,7 @@ export type SSEMessage =
 /**
  * スキルカテゴリ
  */
-export type SkillCategory = 'review' | 'generate' | 'assist'
+export type SkillCategory = 'review' | 'generate' | 'assist' | 'meta'
 
 /**
  * スキル定義
