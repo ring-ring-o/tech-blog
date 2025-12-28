@@ -1,6 +1,10 @@
-import { query } from '@anthropic-ai/claude-agent-sdk'
-import type { ArticleFrontmatter } from '../types/index.js'
-import { AI_MODELS, AI_AGENT_CONFIG, CONTENT_LIMITS } from '../../shared/constants/content.js'
+import { query } from "@anthropic-ai/claude-agent-sdk";
+import type { ArticleFrontmatter } from "../types/index.js";
+import {
+  AI_MODELS,
+  AI_AGENT_CONFIG,
+  CONTENT_LIMITS,
+} from "../../shared/constants/content.js";
 
 /**
  * タイトルを英語スラッグに変換
@@ -21,24 +25,25 @@ export async function generateSlug(title: string): Promise<string> {
 ## 出力形式
 スラッグのみを出力してください。説明や前置きは不要です。
 例: getting-started-with-react-hooks
-`
+`;
 
   try {
-    let slug = ''
+    let slug = "";
     for await (const message of query({
       prompt,
       options: {
         model: AI_MODELS.DEFAULT,
-        systemPrompt: 'You are a URL slug generator. Output only the slug, nothing else.',
+        systemPrompt:
+          "You are a URL slug generator. Output only the slug, nothing else.",
         maxTurns: AI_AGENT_CONFIG.SLUG_GENERATION_MAX_TURNS,
         allowedTools: [],
       },
     })) {
       // アシスタントメッセージからテキストを抽出
-      if (message.type === 'assistant' && message.message?.content) {
+      if (message.type === "assistant" && message.message?.content) {
         for (const block of message.message.content) {
-          if ('text' in block) {
-            slug += block.text
+          if ("text" in block) {
+            slug += block.text;
           }
         }
       }
@@ -48,18 +53,18 @@ export async function generateSlug(title: string): Promise<string> {
     return slug
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH)
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH);
   } catch (error) {
-    console.error('generateSlug error:', error)
+    console.error("generateSlug error:", error);
     // フォールバック: 簡易的な変換
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH)
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .substring(0, CONTENT_LIMITS.SLUG_MAX_LENGTH);
   }
 }
 
@@ -77,7 +82,7 @@ export async function* reviewArticle(
 ## Frontmatter
 - タイトル: ${frontmatter.title}
 - 説明: ${frontmatter.description}
-- タグ: ${frontmatter.tags.join(', ')}
+- タグ: ${frontmatter.tags.join(", ")}
 - 公開日: ${frontmatter.publishedAt}
 
 ## 本文
@@ -100,9 +105,14 @@ ${content}
    - 前提知識や動作環境が明記されているか
    - 適切な引用や参照があるか
    - 柔らかい「ですます調」で統一されているか
+7. **Callout（補足情報ブロック）の活用**:
+   - 重要な警告や注意事項に:::warningや:::cautionを使用しているか
+   - ヒントや推奨事項に:::tipを使用しているか
+   - 補足情報に:::noteを使用しているか
+   - Calloutの記法が正しいか（:::type ... :::）
 
 問題点があれば、修正前と修正後を具体的に示してください。
-`
+`;
 
   try {
     for await (const message of query({
@@ -122,13 +132,13 @@ Markdownの書式に注意し、読みやすい記事になるようアドバイ
         allowedTools: [],
       },
     })) {
-      yield message
+      yield message;
     }
   } catch (error) {
     yield {
-      type: 'error' as const,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }
+      type: "error" as const,
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -138,18 +148,18 @@ Markdownの書式に注意し、読みやすい記事になるようアドバイ
 export async function* generateDraft(
   topic: string,
   requirements?: {
-    targetLength?: 'short' | 'medium' | 'long'
-    tone?: 'casual' | 'professional'
-    includeCode?: boolean
+    targetLength?: "short" | "medium" | "long";
+    tone?: "casual" | "professional";
+    includeCode?: boolean;
   }
 ) {
   const lengthGuide = {
-    short: '1000-1500文字程度',
-    medium: '2000-3000文字程度',
-    long: '4000-5000文字程度',
-  }
+    short: "1000-1500文字程度",
+    medium: "2000-3000文字程度",
+    long: "4000-5000文字程度",
+  };
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toISOString().split("T")[0];
 
   const prompt = `
 以下のトピックでブログ記事の下書きを生成してください。
@@ -158,9 +168,13 @@ export async function* generateDraft(
 ${topic}
 
 ## 要件
-- 文字数: ${lengthGuide[requirements?.targetLength || 'medium']}
-- トーン: ${requirements?.tone === 'casual' ? 'カジュアル・親しみやすい' : 'プロフェッショナル・丁寧'}
-- コードサンプル: ${requirements?.includeCode ? '含める' : '必要に応じて'}
+- 文字数: ${lengthGuide[requirements?.targetLength || "medium"]}
+- トーン: ${
+    requirements?.tone === "casual"
+      ? "カジュアル・親しみやすい"
+      : "プロフェッショナル・丁寧"
+  }
+- コードサンプル: ${requirements?.includeCode ? "含める" : "必要に応じて"}
 
 ## 出力形式
 以下のYAML Frontmatter形式で始めて、その後にMarkdown本文を記述してください：
@@ -185,7 +199,27 @@ tags: ["タグ1", "タグ2"]
 - 前提となる環境やバージョンを明記してください
 - 技術的な主張には根拠を示してください
 - 必要に応じて公式ドキュメントへの言及を含めてください
-`
+
+## Callout（補足情報ブロック）
+重要な情報や注意点を強調したい場合、以下の記法を使用してください。
+**重要**: 開始タグ、内容、終了タグはそれぞれ空行で区切ってください。
+
+\`\`\`markdown
+:::note タイトル（任意）
+
+一般的な補足情報
+
+:::
+
+:::warning
+
+警告メッセージ
+
+:::
+\`\`\`
+
+タイプ: note（補足）, tip（ヒント）, warning（警告）, caution（危険）, important（重要）
+`;
 
   try {
     for await (const message of query({
@@ -204,17 +238,23 @@ SEOを意識した読みやすい技術記事を執筆してください。
   - 内容が明確で具体的であること
   - 技術的な主張には根拠や検証結果を示すこと
   - 前提知識や環境を明記すること
-  - 必要に応じて公式ドキュメントや信頼できる情報源への言及を含めること`,
+  - 必要に応じて公式ドキュメントや信頼できる情報源への言及を含めること
+- 重要な情報や注意点にはCallout記法を使用してください：
+  - :::note - 補足情報
+  - :::tip - ヒント
+  - :::warning - 警告
+  - :::caution - 危険な注意事項
+  - :::important - 重要な情報`,
         maxTurns: AI_AGENT_CONFIG.DRAFT_GENERATION_MAX_TURNS,
         allowedTools: [],
       },
     })) {
-      yield message
+      yield message;
     }
   } catch (error) {
     yield {
-      type: 'error' as const,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }
+      type: "error" as const,
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }

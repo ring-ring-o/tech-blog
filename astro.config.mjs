@@ -9,6 +9,7 @@ import sitemap from '@astrojs/sitemap'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'astro/config'
 import { remarkCodeTitle } from './src/lib/remark-code-title.mjs'
+import { remarkCallout } from './src/lib/remark-callout.mjs'
 
 /**
  * Astro設定
@@ -38,6 +39,8 @@ export default defineConfig({
     remarkPlugins: [
       /** コードブロックから言語名とファイル名を抽出 */
       remarkCodeTitle,
+      /** Callout: 補足情報ブロック（:::note, :::warning 等） */
+      remarkCallout,
     ],
 
     /** Shikiシンタックスハイライト設定 */
