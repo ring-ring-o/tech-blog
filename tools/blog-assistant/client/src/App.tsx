@@ -787,7 +787,13 @@ export default function App() {
                 </button>
                 {!isFrontmatterCollapsed && (
                   <div className="p-4">
-                    <FrontmatterForm value={frontmatter} onChange={setFrontmatter} />
+                    <FrontmatterForm
+                      value={frontmatter}
+                      onChange={setFrontmatter}
+                      onGenerateDescription={handleGenerateDescription}
+                      onSuggestTags={handleSuggestTags}
+                      isAILoading={isAnyAILoading}
+                    />
                   </div>
                 )}
               </div>
