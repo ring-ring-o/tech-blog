@@ -7,7 +7,7 @@ import { SaveModal } from './components/SaveModal'
 import { CreateArticleModal } from './components/CreateArticleModal'
 import { ArticleList } from './components/ArticleList'
 import { SkillEditor } from './components/SkillEditor'
-import { AIResultsPanel, type AIResult } from './components/AIResultsPanel'
+import { AIResultsPanel, type AIResult, type AIResultsPanelHandle } from './components/AIResultsPanel'
 import { useAIReview } from './hooks/useAIReview'
 import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
@@ -34,6 +34,8 @@ export default function App() {
   const [isResizing, setIsResizing] = useState(false)
   const [isRightPaneCollapsed, setIsRightPaneCollapsed] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const aiResultsPanelRef = useRef<AIResultsPanelHandle>(null)
+  const editorContainerRef = useRef<HTMLDivElement>(null)
 
   // 記事編集状態
   const [showArticleList, setShowArticleList] = useState(false)
@@ -157,7 +159,7 @@ export default function App() {
     await review(content, frontmatter)
   }, [content, frontmatter, review])
 
-  // 校閲完了時に結果を追加
+  // 校閲完了時に結果を追加してフォーカスを移動
   useEffect(() => {
     if (!isReviewing && reviewText) {
       setAiResults((prev) => [
@@ -171,6 +173,8 @@ export default function App() {
         },
         ...prev,
       ])
+      // 結果追加後にフォーカスを移動
+      setTimeout(() => aiResultsPanelRef.current?.focus(), 100)
     }
   }, [isReviewing, reviewText])
 
@@ -190,7 +194,7 @@ export default function App() {
     setGenerateTopic('')
   }, [generateTopic, generate])
 
-  // 生成完了時に結果を追加
+  // 生成完了時に結果を追加してフォーカスを移動
   useEffect(() => {
     if (!isGenerating && generateText) {
       setAiResults((prev) => [
@@ -204,6 +208,8 @@ export default function App() {
         },
         ...prev,
       ])
+      // 結果追加後にフォーカスを移動
+      setTimeout(() => aiResultsPanelRef.current?.focus(), 100)
     }
   }, [isGenerating, generateText])
 
@@ -251,6 +257,8 @@ export default function App() {
       ])
     } finally {
       setIsGeneratingDescription(false)
+      // 結果追加後にフォーカスを移動
+      setTimeout(() => aiResultsPanelRef.current?.focus(), 100)
     }
   }, [content, frontmatter.title])
 
@@ -306,6 +314,8 @@ export default function App() {
       ])
     } finally {
       setIsSuggestingTags(false)
+      // 結果追加後にフォーカスを移動
+      setTimeout(() => aiResultsPanelRef.current?.focus(), 100)
     }
   }, [content, frontmatter.title, frontmatter.tags])
 
@@ -551,6 +561,8 @@ export default function App() {
     } finally {
       setExecutingSkillInfo(null)
       setSkillStreamingText('')
+      // 結果追加後にフォーカスを移動
+      setTimeout(() => aiResultsPanelRef.current?.focus(), 100)
     }
   }, [handleGenerateDescription, handleSuggestTags, content, frontmatter, executeSkill])
 
@@ -812,7 +824,7 @@ export default function App() {
               </div>
 
               {/* Editor */}
-              <div className="flex-1 p-4 overflow-auto">
+              <div ref={editorContainerRef} className="flex-1 p-4 overflow-auto">
                 <Editor
                   value={content}
                   onChange={setContent}
@@ -959,12 +971,17 @@ export default function App() {
               )}
               {activeTab === 'results' && (
                 <AIResultsPanel
+                  ref={aiResultsPanelRef}
                   results={aiResults}
                   isLoading={isAnyAILoading}
                   loadingTitle={loadingTitle}
                   streamingContent={streamingContent}
                   onApply={handleApplyResult}
                   onClear={handleClearResults}
+                  onEscape={() => {
+                    // エディタコンテナにフォーカスを戻す
+                    editorContainerRef.current?.querySelector('textarea')?.focus()
+                  }}
                   topicInput={{ isOpen: showTopicInput, topic: generateTopic }}
                   onTopicChange={setGenerateTopic}
                   onTopicSubmit={handleConfirmGenerate}
