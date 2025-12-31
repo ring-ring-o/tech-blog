@@ -1,84 +1,84 @@
 import { Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import { query } from '@anthropic-ai/claude-agent-sdk'
-import { skillService } from '../services/skill-service.js'
-import type { SaveSkillRequest, ExecuteSkillRequest, SkillCategory } from '../types/index.js'
+import { assistService } from '../services/assist-service.js'
+import type { SaveAssistRequest, ExecuteAssistRequest, AssistCategory } from '../types/index.js'
 import { AI_MODELS, AI_AGENT_CONFIG } from '../../shared/constants/content.js'
 
 const app = new Hono()
 
-// スキル一覧を取得
+// アシスト一覧を取得
 app.get('/', async (c) => {
-  const category = c.req.query('category') as SkillCategory | undefined
-  const skills = category
-    ? await skillService.getSkillsByCategory(category)
-    : await skillService.listSkills()
-  return c.json(skills)
+  const category = c.req.query('category') as AssistCategory | undefined
+  const assists = category
+    ? await assistService.getAssistsByCategory(category)
+    : await assistService.listAssists()
+  return c.json(assists)
 })
 
-// スキルを取得
+// アシストを取得
 app.get('/:id', async (c) => {
   const id = c.req.param('id')
-  const skill = await skillService.getSkill(id)
+  const assist = await assistService.getAssist(id)
 
-  if (!skill) {
-    return c.json({ error: 'Skill not found' }, 404)
+  if (!assist) {
+    return c.json({ error: 'Assist not found' }, 404)
   }
 
-  return c.json(skill)
+  return c.json(assist)
 })
 
-// カスタムスキルを作成
+// カスタムアシストを作成
 app.post('/', async (c) => {
-  const body = (await c.req.json()) as SaveSkillRequest
+  const body = (await c.req.json()) as SaveAssistRequest
 
   if (!body.name || !body.systemPrompt || !body.userPromptTemplate) {
     return c.json({ error: 'Missing required fields' }, 400)
   }
 
-  const skill = await skillService.createSkill(body)
-  return c.json(skill, 201)
+  const assist = await assistService.createAssist(body)
+  return c.json(assist, 201)
 })
 
-// スキルを更新
+// アシストを更新
 app.put('/:id', async (c) => {
   const id = c.req.param('id')
-  const body = (await c.req.json()) as SaveSkillRequest
+  const body = (await c.req.json()) as SaveAssistRequest
 
-  const skill = await skillService.updateSkill(id, body)
+  const assist = await assistService.updateAssist(id, body)
 
-  if (!skill) {
-    return c.json({ error: 'Skill not found' }, 404)
+  if (!assist) {
+    return c.json({ error: 'Assist not found' }, 404)
   }
 
-  return c.json(skill)
+  return c.json(assist)
 })
 
-// カスタムスキルを削除
+// カスタムアシストを削除
 app.delete('/:id', async (c) => {
   const id = c.req.param('id')
-  const success = await skillService.deleteSkill(id)
+  const success = await assistService.deleteAssist(id)
 
   if (!success) {
-    return c.json({ error: 'Skill not found or is built-in' }, 404)
+    return c.json({ error: 'Assist not found or is built-in' }, 404)
   }
 
   return c.json({ success: true })
 })
 
-// スキルを実行（SSE）
+// アシストを実行（SSE）
 app.post('/:id/execute', async (c) => {
   const id = c.req.param('id')
-  const body = (await c.req.json()) as ExecuteSkillRequest
+  const body = (await c.req.json()) as ExecuteAssistRequest
 
-  const skill = await skillService.getSkill(id)
+  const assist = await assistService.getAssist(id)
 
-  if (!skill) {
-    return c.json({ error: 'Skill not found' }, 404)
+  if (!assist) {
+    return c.json({ error: 'Assist not found' }, 404)
   }
 
   // プロンプトを生成
-  const userPrompt = skillService.buildPrompt(skill.userPromptTemplate, body.variables)
+  const userPrompt = assistService.buildPrompt(assist.userPromptTemplate, body.variables)
 
   return streamSSE(c, async (stream) => {
     try {
@@ -86,7 +86,7 @@ app.post('/:id/execute', async (c) => {
         prompt: userPrompt,
         options: {
           model: AI_MODELS.DEFAULT,
-          systemPrompt: skill.systemPrompt,
+          systemPrompt: assist.systemPrompt,
           maxTurns: AI_AGENT_CONFIG.REVIEW_MAX_TURNS,
           allowedTools: [],
         },

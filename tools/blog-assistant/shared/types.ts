@@ -82,18 +82,18 @@ export type SSEMessage =
   | { type: 'error'; message: string }
 
 /**
- * スキルカテゴリ
+ * アシストカテゴリ
  */
-export type SkillCategory = 'review' | 'generate' | 'assist' | 'meta'
+export type AssistCategory = 'review' | 'generate' | 'assist' | 'meta'
 
 /**
- * スキル定義
+ * アシスト定義
  */
-export interface Skill {
+export interface Assist {
   id: string
   name: string
   description: string
-  category: SkillCategory
+  category: AssistCategory
   systemPrompt: string
   userPromptTemplate: string
   /** 利用可能な変数: {{content}}, {{title}}, {{description}}, {{tags}}, {{selection}} */
@@ -104,20 +104,20 @@ export interface Skill {
 }
 
 /**
- * スキル実行リクエスト
+ * アシスト実行リクエスト
  */
-export interface ExecuteSkillRequest {
-  skillId: string
+export interface ExecuteAssistRequest {
+  assistId: string
   variables: Record<string, string>
 }
 
 /**
- * スキル作成/更新リクエスト
+ * アシスト作成/更新リクエスト
  */
-export interface SaveSkillRequest {
+export interface SaveAssistRequest {
   name: string
   description: string
-  category: SkillCategory
+  category: AssistCategory
   systemPrompt: string
   userPromptTemplate: string
 }

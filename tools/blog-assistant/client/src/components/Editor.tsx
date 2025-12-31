@@ -2,7 +2,7 @@ import { useRef, useCallback, useState, useEffect, type DragEvent, type Clipboar
 import { useImageUpload } from '../hooks/useImageUpload'
 import { EditorCommandMenu } from './EditorCommandMenu'
 import { EditorSelectionPopup } from './EditorSelectionPopup'
-import type { Skill, BlogDirectory } from '@shared/types'
+import type { Assist, BlogDirectory } from '@shared/types'
 import { EDITOR_CONFIG } from '@shared/constants/ui'
 
 /** 画像を記事フォルダに保存するためのコンテキスト */
@@ -14,8 +14,8 @@ interface ArticleImageContext {
 interface EditorProps {
   value: string
   onChange: (value: string) => void
-  skills?: Skill[]
-  onExecuteSkill?: (skill: Skill, selection: string) => void
+  assists?: Assist[]
+  onExecuteAssist?: (assist: Assist, selection: string) => void
   onReview?: () => void
   onGenerateDraft?: () => void
   onGenerateDescription?: () => void
@@ -27,8 +27,8 @@ interface EditorProps {
 export function Editor({
   value,
   onChange,
-  skills = [],
-  onExecuteSkill,
+  assists = [],
+  onExecuteAssist,
   onReview,
   onGenerateDraft,
   onGenerateDescription,
@@ -307,16 +307,16 @@ export function Editor({
     }
   }, [slashPosition, value, onChange])
 
-  // スキル実行
-  const handleExecuteSkill = useCallback(
-    (skill: Skill) => {
+  // アシスト実行
+  const handleExecuteAssist = useCallback(
+    (assist: Assist) => {
       handleCloseCommandMenu()
       setSelectionPopupOpen(false)
-      if (onExecuteSkill) {
-        onExecuteSkill(skill, currentSelection)
+      if (onExecuteAssist) {
+        onExecuteAssist(assist, currentSelection)
       }
     },
-    [onExecuteSkill, currentSelection, handleCloseCommandMenu]
+    [onExecuteAssist, currentSelection, handleCloseCommandMenu]
   )
 
   // 校閲
@@ -458,9 +458,9 @@ export function Editor({
         isOpen={commandMenuOpen}
         position={commandMenuPosition}
         filter={commandFilter}
-        skills={skills}
+        assists={assists}
         onClose={handleCloseCommandMenu}
-        onExecuteSkill={handleExecuteSkill}
+        onExecuteAssist={handleExecuteAssist}
         onInsertImage={handleInsertImage}
         onReview={handleReview}
         onGenerateDraft={handleGenerateDraft}
@@ -472,9 +472,9 @@ export function Editor({
       <EditorSelectionPopup
         isOpen={selectionPopupOpen}
         position={selectionPopupPosition}
-        skills={skills}
+        assists={assists}
         onClose={() => setSelectionPopupOpen(false)}
-        onExecuteSkill={handleExecuteSkill}
+        onExecuteAssist={handleExecuteAssist}
       />
     </div>
   )

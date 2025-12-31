@@ -1,9 +1,9 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname } from 'node:path'
-import type { Skill, SkillCategory, SaveSkillRequest } from '../types/index.js'
+import type { Assist, AssistCategory, SaveAssistRequest } from '../types/index.js'
 
-const SKILLS_FILE = '/workspace/tools/blog-assistant/data/skills.json'
+const ASSISTS_FILE = '/workspace/tools/blog-assistant/data/assists.json'
 
 // 共通のシステムプロンプト指示
 const COMMON_INSTRUCTIONS = `
@@ -17,8 +17,8 @@ const COMMON_INSTRUCTIONS = `
   - 必要に応じて公式ドキュメントや信頼できる情報源への言及を含めること
 `
 
-// ビルトインスキルの定義
-const BUILT_IN_SKILLS: Skill[] = [
+// ビルトインアシストの定義
+const BUILT_IN_ASSISTS: Assist[] = [
   {
     id: 'review',
     name: '校閲',
@@ -269,34 +269,34 @@ ${COMMON_INSTRUCTIONS}`,
   },
 ]
 
-export class SkillService {
-  private skills: Skill[] = []
+export class AssistService {
+  private assists: Assist[] = []
   private initialized = false
 
   /**
-   * スキルデータを初期化
+   * アシストデータを初期化
    */
   async initialize(): Promise<void> {
     if (this.initialized) return
 
     // ディレクトリが存在しない場合は作成
-    const dir = dirname(SKILLS_FILE)
+    const dir = dirname(ASSISTS_FILE)
     if (!existsSync(dir)) {
       await mkdir(dir, { recursive: true })
     }
 
     // ファイルが存在する場合は読み込み
-    if (existsSync(SKILLS_FILE)) {
+    if (existsSync(ASSISTS_FILE)) {
       try {
-        const data = await readFile(SKILLS_FILE, 'utf-8')
-        const customSkills: Skill[] = JSON.parse(data)
-        // ビルトインスキルとカスタムスキルをマージ
-        this.skills = [...BUILT_IN_SKILLS, ...customSkills]
+        const data = await readFile(ASSISTS_FILE, 'utf-8')
+        const customAssists: Assist[] = JSON.parse(data)
+        // ビルトインアシストとカスタムアシストをマージ
+        this.assists = [...BUILT_IN_ASSISTS, ...customAssists]
       } catch {
-        this.skills = [...BUILT_IN_SKILLS]
+        this.assists = [...BUILT_IN_ASSISTS]
       }
     } else {
-      this.skills = [...BUILT_IN_SKILLS]
+      this.assists = [...BUILT_IN_ASSISTS]
       await this.save()
     }
 
@@ -304,47 +304,47 @@ export class SkillService {
   }
 
   /**
-   * カスタムスキルを保存
+   * カスタムアシストを保存
    */
   private async save(): Promise<void> {
-    const customSkills = this.skills.filter((s) => !s.isBuiltIn)
-    await writeFile(SKILLS_FILE, JSON.stringify(customSkills, null, 2), 'utf-8')
+    const customAssists = this.assists.filter((s) => !s.isBuiltIn)
+    await writeFile(ASSISTS_FILE, JSON.stringify(customAssists, null, 2), 'utf-8')
   }
 
   /**
-   * 全スキルを取得
+   * 全アシストを取得
    */
-  async listSkills(): Promise<Skill[]> {
+  async listAssists(): Promise<Assist[]> {
     await this.initialize()
-    return this.skills
+    return this.assists
   }
 
   /**
-   * カテゴリ別にスキルを取得
+   * カテゴリ別にアシストを取得
    */
-  async getSkillsByCategory(category: SkillCategory): Promise<Skill[]> {
+  async getAssistsByCategory(category: AssistCategory): Promise<Assist[]> {
     await this.initialize()
-    return this.skills.filter((s) => s.category === category)
+    return this.assists.filter((s) => s.category === category)
   }
 
   /**
-   * スキルを取得
+   * アシストを取得
    */
-  async getSkill(id: string): Promise<Skill | null> {
+  async getAssist(id: string): Promise<Assist | null> {
     await this.initialize()
-    return this.skills.find((s) => s.id === id) || null
+    return this.assists.find((s) => s.id === id) || null
   }
 
   /**
-   * カスタムスキルを作成
+   * カスタムアシストを作成
    */
-  async createSkill(data: SaveSkillRequest): Promise<Skill> {
+  async createAssist(data: SaveAssistRequest): Promise<Assist> {
     await this.initialize()
 
     // 変数を抽出
     const variables = this.extractVariables(data.userPromptTemplate)
 
-    const skill: Skill = {
+    const assist: Assist = {
       id: `custom-${Date.now()}`,
       name: data.name,
       description: data.description,
@@ -357,39 +357,39 @@ export class SkillService {
       updatedAt: new Date().toISOString(),
     }
 
-    this.skills.push(skill)
+    this.assists.push(assist)
     await this.save()
-    return skill
+    return assist
   }
 
   /**
-   * スキルを更新
+   * アシストを更新
    */
-  async updateSkill(id: string, data: SaveSkillRequest): Promise<Skill | null> {
+  async updateAssist(id: string, data: SaveAssistRequest): Promise<Assist | null> {
     await this.initialize()
 
-    const index = this.skills.findIndex((s) => s.id === id)
+    const index = this.assists.findIndex((s) => s.id === id)
     if (index === -1) return null
 
-    const existing = this.skills[index]
+    const existing = this.assists[index]
 
-    // ビルトインスキルは更新不可（プロンプトのカスタマイズは別途対応）
+    // ビルトインアシストは更新不可（プロンプトのカスタマイズは別途対応）
     if (existing.isBuiltIn) {
-      // ビルトインスキルはプロンプトのみ更新可能
-      const updated: Skill = {
+      // ビルトインアシストはプロンプトのみ更新可能
+      const updated: Assist = {
         ...existing,
         systemPrompt: data.systemPrompt,
         userPromptTemplate: data.userPromptTemplate,
         variables: this.extractVariables(data.userPromptTemplate),
         updatedAt: new Date().toISOString(),
       }
-      this.skills[index] = updated
-      // ビルトインスキルのカスタマイズは別ファイルに保存することも検討
+      this.assists[index] = updated
+      // ビルトインアシストのカスタマイズは別ファイルに保存することも検討
       return updated
     }
 
     const variables = this.extractVariables(data.userPromptTemplate)
-    const updated: Skill = {
+    const updated: Assist = {
       ...existing,
       name: data.name,
       description: data.description,
@@ -400,21 +400,21 @@ export class SkillService {
       updatedAt: new Date().toISOString(),
     }
 
-    this.skills[index] = updated
+    this.assists[index] = updated
     await this.save()
     return updated
   }
 
   /**
-   * カスタムスキルを削除
+   * カスタムアシストを削除
    */
-  async deleteSkill(id: string): Promise<boolean> {
+  async deleteAssist(id: string): Promise<boolean> {
     await this.initialize()
 
-    const skill = this.skills.find((s) => s.id === id)
-    if (!skill || skill.isBuiltIn) return false
+    const assist = this.assists.find((s) => s.id === id)
+    if (!assist || assist.isBuiltIn) return false
 
-    this.skills = this.skills.filter((s) => s.id !== id)
+    this.assists = this.assists.filter((s) => s.id !== id)
     await this.save()
     return true
   }
@@ -440,4 +440,4 @@ export class SkillService {
   }
 }
 
-export const skillService = new SkillService()
+export const assistService = new AssistService()

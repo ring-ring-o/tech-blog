@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { Skill } from '@shared/types'
+import type { Assist } from '@shared/types'
 
 interface Command {
   id: string
@@ -14,9 +14,9 @@ interface EditorCommandMenuProps {
   isOpen: boolean
   position: { x: number; y: number }
   filter: string
-  skills: Skill[]
+  assists: Assist[]
   onClose: () => void
-  onExecuteSkill: (skill: Skill) => void
+  onExecuteAssist: (assist: Assist) => void
   onInsertImage: () => void
   onReview: () => void
   onGenerateDraft: () => void
@@ -34,9 +34,9 @@ export function EditorCommandMenu({
   isOpen,
   position,
   filter,
-  skills,
+  assists,
   onClose,
-  onExecuteSkill,
+  onExecuteAssist,
   onInsertImage,
   onReview,
   onGenerateDraft,
@@ -97,18 +97,18 @@ export function EditorCommandMenu({
       category: 'ai',
       action: onSuggestTags,
     },
-    // スキル
-    ...skills.map((skill) => ({
-      id: `skill-${skill.id}`,
-      label: skill.name,
-      description: skill.description,
+    // アシスト
+    ...assists.map((assist) => ({
+      id: `assist-${assist.id}`,
+      label: assist.name,
+      description: assist.description,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
       category: 'ai' as const,
-      action: () => onExecuteSkill(skill),
+      action: () => onExecuteAssist(assist),
     })),
     // 挿入
     {

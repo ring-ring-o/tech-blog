@@ -1,43 +1,43 @@
 import { useState, useEffect } from 'react'
-import type { Skill, SkillCategory, SaveSkillRequest } from '@shared/types'
+import type { Assist, AssistCategory, SaveAssistRequest } from '@shared/types'
 
-interface SkillEditorProps {
-  skill: Skill | null
+interface AssistEditorProps {
+  assist: Assist | null
   isNew: boolean
-  onSave: (data: SaveSkillRequest) => Promise<void>
+  onSave: (data: SaveAssistRequest) => Promise<void>
   onDelete?: () => Promise<void>
   onClose: () => void
 }
 
-const categoryOptions: { value: SkillCategory; label: string }[] = [
+const categoryOptions: { value: AssistCategory; label: string }[] = [
   { value: 'review', label: '校閲' },
   { value: 'generate', label: '生成' },
   { value: 'assist', label: '補助' },
   { value: 'meta', label: 'メタ情報' },
 ]
 
-export function SkillEditor({
-  skill,
+export function AssistEditor({
+  assist,
   isNew,
   onSave,
   onDelete,
   onClose,
-}: SkillEditorProps) {
+}: AssistEditorProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState<SkillCategory>('assist')
+  const [category, setCategory] = useState<AssistCategory>('assist')
   const [systemPrompt, setSystemPrompt] = useState('')
   const [userPromptTemplate, setUserPromptTemplate] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    if (skill) {
-      setName(skill.name)
-      setDescription(skill.description)
-      setCategory(skill.category)
-      setSystemPrompt(skill.systemPrompt)
-      setUserPromptTemplate(skill.userPromptTemplate)
+    if (assist) {
+      setName(assist.name)
+      setDescription(assist.description)
+      setCategory(assist.category)
+      setSystemPrompt(assist.systemPrompt)
+      setUserPromptTemplate(assist.userPromptTemplate)
     } else {
       setName('')
       setDescription('')
@@ -45,7 +45,7 @@ export function SkillEditor({
       setSystemPrompt('')
       setUserPromptTemplate('')
     }
-  }, [skill])
+  }, [assist])
 
   const handleSave = async () => {
     if (!name.trim() || !userPromptTemplate.trim()) return
@@ -67,7 +67,7 @@ export function SkillEditor({
 
   const handleDelete = async () => {
     if (!onDelete) return
-    if (!confirm('このスキルを削除しますか？')) return
+    if (!confirm('このアシストを削除しますか？')) return
 
     setIsDeleting(true)
     try {
@@ -78,7 +78,7 @@ export function SkillEditor({
     }
   }
 
-  const isBuiltIn = skill?.isBuiltIn ?? false
+  const isBuiltIn = assist?.isBuiltIn ?? false
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -86,7 +86,7 @@ export function SkillEditor({
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-800">
-            {isNew ? '新規スキル作成' : isBuiltIn ? 'スキル詳細' : 'スキル編集'}
+            {isNew ? '新規アシスト作成' : isBuiltIn ? 'アシスト詳細' : 'アシスト編集'}
           </h2>
           <button
             onClick={onClose}
@@ -102,14 +102,14 @@ export function SkillEditor({
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {isBuiltIn && (
             <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-              ビルトインスキルは編集できません。プロンプトの確認のみ可能です。
+              ビルトインアシストは編集できません。プロンプトの確認のみ可能です。
             </div>
           )}
 
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              スキル名 <span className="text-red-500">*</span>
+              アシスト名 <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -143,7 +143,7 @@ export function SkillEditor({
             </label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value as SkillCategory)}
+              onChange={(e) => setCategory(e.target.value as AssistCategory)}
               disabled={isBuiltIn}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
             >
@@ -189,13 +189,13 @@ export function SkillEditor({
           </div>
 
           {/* Variables Preview */}
-          {skill?.variables && skill.variables.length > 0 && (
+          {assist?.variables && assist.variables.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 使用中の変数
               </label>
               <div className="flex flex-wrap gap-1">
-                {skill.variables.map((v) => (
+                {assist.variables.map((v) => (
                   <span
                     key={v}
                     className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"

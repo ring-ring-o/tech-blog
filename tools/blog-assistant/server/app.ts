@@ -6,7 +6,7 @@ import articlesRoute from './routes/articles.js'
 import reviewRoute from './routes/review.js'
 import generateRoute from './routes/generate.js'
 import previewRoute from './routes/preview.js'
-import skillsRoute from './routes/skills.js'
+import assistsRoute from './routes/assists.js'
 import imagesRoute from './routes/images.js'
 import { CORS_ORIGINS } from '../shared/constants/server.js'
 
@@ -38,7 +38,7 @@ app.route('/api/articles', articlesRoute)
 app.route('/api/review', reviewRoute)
 app.route('/api/generate', generateRoute)
 app.route('/api/preview', previewRoute)
-app.route('/api/skills', skillsRoute)
+app.route('/api/assists', assistsRoute)
 app.route('/api/images', imagesRoute)
 
 // Error handler

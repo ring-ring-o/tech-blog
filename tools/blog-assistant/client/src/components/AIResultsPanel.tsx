@@ -5,7 +5,7 @@ import type { TagSuggestion } from '@shared/types'
 
 export interface AIResult {
   id: string
-  type: 'review' | 'generate' | 'skill' | 'description' | 'tags'
+  type: 'review' | 'generate' | 'assist' | 'description' | 'tags'
   title: string
   content: string
   timestamp: Date
@@ -41,7 +41,7 @@ interface AIResultsPanelProps {
 const typeConfig = {
   review: { label: '校閲', className: 'bg-blue-100 text-blue-700' },
   generate: { label: '生成', className: 'bg-purple-100 text-purple-700' },
-  skill: { label: 'スキル', className: 'bg-green-100 text-green-700' },
+  assist: { label: 'アシスト', className: 'bg-green-100 text-green-700' },
   description: { label: '説明', className: 'bg-amber-100 text-amber-700' },
   tags: { label: 'タグ', className: 'bg-teal-100 text-teal-700' },
 }

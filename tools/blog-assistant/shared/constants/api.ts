@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
   REVIEW: '/api/review',
   GENERATE: '/api/generate',
   PREVIEW: '/api/preview',
-  SKILLS: '/api/skills',
+  ASSISTS: '/api/assists',
   IMAGES_UPLOAD: '/api/images/upload',
 } as const
 

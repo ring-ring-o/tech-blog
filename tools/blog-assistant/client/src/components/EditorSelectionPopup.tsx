@@ -1,29 +1,29 @@
 import { useEffect, useRef } from 'react'
-import type { Skill } from '@shared/types'
+import type { Assist } from '@shared/types'
 
 interface EditorSelectionPopupProps {
   isOpen: boolean
   position: { x: number; y: number }
-  skills: Skill[]
+  assists: Assist[]
   onClose: () => void
-  onExecuteSkill: (skill: Skill) => void
+  onExecuteAssist: (assist: Assist) => void
 }
 
 export function EditorSelectionPopup({
   isOpen,
   position,
-  skills,
+  assists,
   onClose,
-  onExecuteSkill,
+  onExecuteAssist,
 }: EditorSelectionPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null)
 
-  // 選択テキストに適用可能なスキルのみ表示
-  const applicableSkills = skills.filter(
-    (skill) =>
-      skill.variables.includes('selection') ||
-      skill.id === 'improve-section' ||
-      skill.id === 'supplement'
+  // 選択テキストに適用可能なアシストのみ表示
+  const applicableAssists = assists.filter(
+    (assist) =>
+      assist.variables.includes('selection') ||
+      assist.id === 'improve-section' ||
+      assist.id === 'supplement'
   )
 
   // 外部クリックで閉じる（遅延を入れてmouseupと競合しないようにする）
@@ -73,22 +73,22 @@ export function EditorSelectionPopup({
       }}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      {applicableSkills.map((skill) => (
+      {applicableAssists.map((assist) => (
         <button
-          key={skill.id}
+          key={assist.id}
           onClick={() => {
-            onExecuteSkill(skill)
+            onExecuteAssist(assist)
             onClose()
           }}
           className="px-3 py-1.5 text-sm hover:bg-gray-700 rounded transition-colors whitespace-nowrap"
-          title={skill.description}
+          title={assist.description}
         >
-          {skill.name}
+          {assist.name}
         </button>
       ))}
-      {applicableSkills.length === 0 && (
+      {applicableAssists.length === 0 && (
         <span className="px-3 py-1.5 text-sm text-gray-400">
-          選択テキスト用のスキルがありません
+          選択テキスト用のアシストがありません
         </span>
       )}
     </div>

@@ -6,13 +6,13 @@ import { AstroPreview } from './components/AstroPreview'
 import { SaveModal } from './components/SaveModal'
 import { CreateArticleModal } from './components/CreateArticleModal'
 import { ArticleList } from './components/ArticleList'
-import { SkillEditor } from './components/SkillEditor'
+import { AssistEditor } from './components/AssistEditor'
 import { AIResultsPanel, type AIResult, type AIResultsPanelHandle } from './components/AIResultsPanel'
 import { useAIReview } from './hooks/useAIReview'
 import { useAIGenerate } from './hooks/useAIGenerate'
 import { useArticle } from './hooks/useArticle'
-import { useSkills } from './hooks/useSkills'
-import type { ArticleFrontmatter, BlogDirectory, Article, Skill, SaveSkillRequest, TagSuggestion } from '@shared/types'
+import { useAssists } from './hooks/useAssists'
+import type { ArticleFrontmatter, BlogDirectory, Article, Assist, SaveAssistRequest, TagSuggestion } from '@shared/types'
 import { PANEL_CONFIG } from '@shared/constants/ui'
 import { API_ENDPOINTS } from '@shared/constants/api'
 
@@ -39,7 +39,7 @@ export default function App() {
 
   // 記事編集状態
   const [showArticleList, setShowArticleList] = useState(false)
-  const [showSkillsPanel, setShowSkillsPanel] = useState(false)
+  const [showAssistsPanel, setShowAssistsPanel] = useState(false)
   const [selectedDirectory, setSelectedDirectory] = useState<BlogDirectory | 'all'>('all')
   const [saveDirectory, setSaveDirectory] = useState<BlogDirectory>('blog')
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
@@ -50,9 +50,9 @@ export default function App() {
   // UI状態
   const [isFrontmatterCollapsed, setIsFrontmatterCollapsed] = useState(false)
 
-  // スキル実行状態
-  const [executingSkillInfo, setExecutingSkillInfo] = useState<{ skill: Skill; selection: string } | null>(null)
-  const [skillStreamingText, setSkillStreamingText] = useState('')
+  // アシスト実行状態
+  const [executingAssistInfo, setExecutingAssistInfo] = useState<{ assist: Assist; selection: string } | null>(null)
+  const [assistStreamingText, setAssistStreamingText] = useState('')
   const [editorSelection, setEditorSelection] = useState('')
 
   // AI結果
@@ -68,10 +68,10 @@ export default function App() {
 
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
-  const { skills, loadSkills, createSkill, updateSkill, deleteSkill, executeSkill, isExecuting: isExecutingSkill } = useSkills()
+  const { assists, loadAssists, createAssist, updateAssist, deleteAssist, executeAssist, isExecuting: isExecutingAssist } = useAssists()
 
-  // スキル編集状態
-  const [editingSkillData, setEditingSkillData] = useState<{ skill: Skill | null; isNew: boolean } | null>(null)
+  // アシスト編集状態
+  const [editingAssistData, setEditingAssistData] = useState<{ assist: Assist | null; isNew: boolean } | null>(null)
   const {
     save,
     isSaving,
@@ -86,10 +86,10 @@ export default function App() {
     clearSaved,
   } = useArticle()
 
-  // スキル一覧を読み込み
+  // アシスト一覧を読み込み
   useEffect(() => {
-    loadSkills()
-  }, [loadSkills])
+    loadAssists()
+  }, [loadAssists])
 
   // 記事一覧を読み込み
   useEffect(() => {
@@ -353,8 +353,8 @@ export default function App() {
       } else {
         setContent(text)
       }
-    } else if (result.type === 'skill') {
-      // スキル結果を適用
+    } else if (result.type === 'assist') {
+      // アシスト結果を適用
       if (editorSelection) {
         setContent((prev) => prev.replace(editorSelection, result.content))
       } else {
@@ -488,20 +488,20 @@ export default function App() {
     setSaveDirectory(directory)
   }, [])
 
-  // スキル実行（エディタから）
-  const handleExecuteSkill = useCallback(async (skill: Skill, selection: string) => {
-    // 特殊なメタスキルは専用ハンドラを使用
-    if (skill.id === 'generate-description') {
+  // アシスト実行（エディタから）
+  const handleExecuteAssist = useCallback(async (assist: Assist, selection: string) => {
+    // 特殊なメタアシストは専用ハンドラを使用
+    if (assist.id === 'generate-description') {
       handleGenerateDescription()
       return
     }
-    if (skill.id === 'suggest-tags') {
+    if (assist.id === 'suggest-tags') {
       handleSuggestTags()
       return
     }
 
-    // 下書き生成スキルはトピック入力が必要
-    if (skill.id === 'generate-draft') {
+    // 下書き生成アシストはトピック入力が必要
+    if (assist.id === 'generate-draft') {
       setShowTopicInput(true)
       setIsRightPaneCollapsed(false)
       setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
@@ -513,8 +513,8 @@ export default function App() {
     setIsRightPaneCollapsed(false)
     setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
     setEditorSelection(selection)
-    setExecutingSkillInfo({ skill, selection })
-    setSkillStreamingText('')
+    setExecutingAssistInfo({ assist, selection })
+    setAssistStreamingText('')
 
     const today = new Date().toISOString().split('T')[0]
     const variables: Record<string, string> = {
@@ -529,17 +529,17 @@ export default function App() {
 
     try {
       let fullText = ''
-      await executeSkill(skill.id, variables, (text) => {
+      await executeAssist(assist.id, variables, (text) => {
         fullText += text
-        setSkillStreamingText(fullText)
+        setAssistStreamingText(fullText)
       })
 
       // 完了後、結果をAI結果リストに追加
       setAiResults((prev) => [
         {
-          id: `skill-${Date.now()}`,
-          type: 'skill',
-          title: skill.name,
+          id: `assist-${Date.now()}`,
+          type: 'assist',
+          title: assist.name,
           content: fullText,
           timestamp: new Date(),
           canApply: true,
@@ -549,22 +549,22 @@ export default function App() {
     } catch (err) {
       setAiResults((prev) => [
         {
-          id: `skill-error-${Date.now()}`,
-          type: 'skill',
-          title: `${skill.name} エラー`,
-          content: err instanceof Error ? err.message : 'スキルの実行に失敗しました',
+          id: `assist-error-${Date.now()}`,
+          type: 'assist',
+          title: `${assist.name} エラー`,
+          content: err instanceof Error ? err.message : 'アシストの実行に失敗しました',
           timestamp: new Date(),
           canApply: false,
         },
         ...prev,
       ])
     } finally {
-      setExecutingSkillInfo(null)
-      setSkillStreamingText('')
+      setExecutingAssistInfo(null)
+      setAssistStreamingText('')
       // 結果追加後にフォーカスを移動
       setTimeout(() => aiResultsPanelRef.current?.focus(), 100)
     }
-  }, [handleGenerateDescription, handleSuggestTags, content, frontmatter, executeSkill])
+  }, [handleGenerateDescription, handleSuggestTags, content, frontmatter, executeAssist])
 
 
   // 現在ストリーミング中のコンテンツ
@@ -572,21 +572,21 @@ export default function App() {
     ? reviewText
     : isGenerating
       ? generateText
-      : isExecutingSkill
-        ? skillStreamingText
+      : isExecutingAssist
+        ? assistStreamingText
         : undefined
   const loadingTitle = isReviewing
     ? '校閲中...'
     : isGenerating
       ? '下書き生成中...'
-      : isExecutingSkill
-        ? `${executingSkillInfo?.skill.name || 'スキル'}を実行中...`
+      : isExecutingAssist
+        ? `${executingAssistInfo?.assist.name || 'アシスト'}を実行中...`
         : isGeneratingDescription
           ? '説明を生成中...'
           : isSuggestingTags
             ? 'タグを提案中...'
             : undefined
-  const isAnyAILoading = isReviewing || isGenerating || isGeneratingDescription || isSuggestingTags || isExecutingSkill
+  const isAnyAILoading = isReviewing || isGenerating || isGeneratingDescription || isSuggestingTags || isExecutingAssist
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -605,16 +605,16 @@ export default function App() {
           >
             記事一覧
           </button>
-          {/* スキルパネルトグル */}
+          {/* アシストパネルトグル */}
           <button
-            onClick={() => setShowSkillsPanel(!showSkillsPanel)}
+            onClick={() => setShowAssistsPanel(!showAssistsPanel)}
             className={`px-2 py-1 text-xs rounded border transition-colors ${
-              showSkillsPanel
+              showAssistsPanel
                 ? 'bg-green-50 border-green-300 text-green-700'
                 : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
-            スキル設定
+            アシスト設定
           </button>
           {/* 編集中の記事情報 */}
           {editingArticle && (
@@ -686,38 +686,38 @@ export default function App() {
         onCancel={handleCancelCreate}
       />
 
-      {/* Skill Editor Modal */}
-      {editingSkillData && (
-        <SkillEditor
-          skill={editingSkillData.skill}
-          isNew={editingSkillData.isNew}
-          onSave={async (data: SaveSkillRequest) => {
-            if (editingSkillData.isNew) {
-              await createSkill(data)
-            } else if (editingSkillData.skill) {
-              await updateSkill(editingSkillData.skill.id, data)
+      {/* Assist Editor Modal */}
+      {editingAssistData && (
+        <AssistEditor
+          assist={editingAssistData.assist}
+          isNew={editingAssistData.isNew}
+          onSave={async (data: SaveAssistRequest) => {
+            if (editingAssistData.isNew) {
+              await createAssist(data)
+            } else if (editingAssistData.assist) {
+              await updateAssist(editingAssistData.assist.id, data)
             }
           }}
           onDelete={
-            editingSkillData.skill && !editingSkillData.skill.isBuiltIn
+            editingAssistData.assist && !editingAssistData.assist.isBuiltIn
               ? async () => {
-                  if (editingSkillData.skill) {
-                    await deleteSkill(editingSkillData.skill.id)
+                  if (editingAssistData.assist) {
+                    await deleteAssist(editingAssistData.assist.id)
                   }
                 }
               : undefined
           }
-          onClose={() => setEditingSkillData(null)}
+          onClose={() => setEditingAssistData(null)}
         />
       )}
 
       {/* Main Content */}
       <div ref={containerRef} className="flex-1 flex overflow-hidden">
-        {/* Left Side Panels (Article List / Skills) */}
-        {(showArticleList || showSkillsPanel) && (
+        {/* Left Side Panels (Article List / Assists) */}
+        {(showArticleList || showAssistsPanel) && (
           <div className="w-64 flex-shrink-0 border-r bg-white flex flex-col">
             {showArticleList && (
-              <div className={showSkillsPanel ? 'flex-1 border-b overflow-hidden' : 'flex-1 overflow-hidden'}>
+              <div className={showAssistsPanel ? 'flex-1 border-b overflow-hidden' : 'flex-1 overflow-hidden'}>
                 <ArticleList
                   articles={articles}
                   isLoading={isLoadingArticles}
@@ -729,15 +729,15 @@ export default function App() {
                 />
               </div>
             )}
-            {showSkillsPanel && (
+            {showAssistsPanel && (
               <div className={showArticleList ? 'h-64 overflow-auto' : 'flex-1 overflow-auto'}>
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-700">スキル一覧</h3>
+                    <h3 className="text-sm font-medium text-gray-700">アシスト一覧</h3>
                     <button
-                      onClick={() => setEditingSkillData({ skill: null, isNew: true })}
+                      onClick={() => setEditingAssistData({ assist: null, isNew: true })}
                       className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                      title="新規スキル作成"
+                      title="新規アシスト作成"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -745,27 +745,27 @@ export default function App() {
                     </button>
                   </div>
                   <div className="space-y-1">
-                    {skills.map((skill) => (
+                    {assists.map((assist) => (
                       <div
-                        key={skill.id}
+                        key={assist.id}
                         className="group flex items-center gap-1 px-2 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
                       >
                         <button
-                          onClick={() => handleExecuteSkill(skill, '')}
+                          onClick={() => handleExecuteAssist(assist, '')}
                           className="flex-1 text-left min-w-0"
                         >
                           <div className="flex items-center gap-1">
-                            <span className="font-medium text-gray-700 truncate">{skill.name}</span>
-                            {skill.isBuiltIn && (
+                            <span className="font-medium text-gray-700 truncate">{assist.name}</span>
+                            {assist.isBuiltIn && (
                               <span className="px-1 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">組込</span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-400 truncate">{skill.description}</div>
+                          <div className="text-xs text-gray-400 truncate">{assist.description}</div>
                         </button>
                         <button
-                          onClick={() => setEditingSkillData({ skill, isNew: false })}
+                          onClick={() => setEditingAssistData({ assist, isNew: false })}
                           className="p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title={skill.isBuiltIn ? '詳細を表示' : '編集'}
+                          title={assist.isBuiltIn ? '詳細を表示' : '編集'}
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -828,8 +828,8 @@ export default function App() {
                 <Editor
                   value={content}
                   onChange={setContent}
-                  skills={skills}
-                  onExecuteSkill={handleExecuteSkill}
+                  assists={assists}
+                  onExecuteAssist={handleExecuteAssist}
                   onReview={handleReview}
                   onGenerateDraft={handleGenerateDraft}
                   onGenerateDescription={handleGenerateDescription}
