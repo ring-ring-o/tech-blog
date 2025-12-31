@@ -15,6 +15,7 @@ import { useAssists } from './hooks/useAssists'
 import type { ArticleFrontmatter, BlogDirectory, Article, Assist, SaveAssistRequest, TagSuggestion } from '@shared/types'
 import { PANEL_CONFIG } from '@shared/constants/ui'
 import { API_ENDPOINTS } from '@shared/constants/api'
+import { TAB_SHORTCUTS, PANEL_SHORTCUTS, NAV_SHORTCUTS, matchesShortcut, formatShortcut } from '@shared/constants/keyboard'
 
 const defaultFrontmatter: ArticleFrontmatter = {
   title: '',
@@ -97,6 +98,87 @@ export default function App() {
       loadArticles()
     }
   }, [showArticleList, loadArticles])
+
+  // グローバルキーボードショートカット
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // テキスト入力中はショートカットを無効化
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return
+      }
+
+      // タブ切り替えショートカット
+      if (matchesShortcut(e, TAB_SHORTCUTS.RESULTS)) {
+        e.preventDefault()
+        setActiveTab('results')
+        if (isRightPaneCollapsed) {
+          setIsRightPaneCollapsed(false)
+          setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+        }
+      } else if (matchesShortcut(e, TAB_SHORTCUTS.PREVIEW)) {
+        e.preventDefault()
+        setActiveTab('preview')
+        if (isRightPaneCollapsed) {
+          setIsRightPaneCollapsed(false)
+          setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+        }
+      } else if (matchesShortcut(e, TAB_SHORTCUTS.ASTRO)) {
+        e.preventDefault()
+        setActiveTab('astro')
+        if (isRightPaneCollapsed) {
+          setIsRightPaneCollapsed(false)
+          setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+        }
+      }
+      // パネル操作ショートカット
+      else if (matchesShortcut(e, PANEL_SHORTCUTS.TOGGLE_RIGHT_PANEL)) {
+        e.preventDefault()
+        if (isRightPaneCollapsed) {
+          setIsRightPaneCollapsed(false)
+          setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+        } else {
+          setIsRightPaneCollapsed(true)
+          setLeftPanelWidth(PANEL_CONFIG.FULL_WIDTH)
+        }
+      } else if (matchesShortcut(e, PANEL_SHORTCUTS.TOGGLE_ARTICLE_LIST)) {
+        e.preventDefault()
+        setShowArticleList((prev) => !prev)
+      } else if (matchesShortcut(e, PANEL_SHORTCUTS.TOGGLE_ASSISTS_PANEL)) {
+        e.preventDefault()
+        setShowAssistsPanel((prev) => !prev)
+      }
+      // タブナビゲーション（Ctrl+Tab / Ctrl+Shift+Tab）
+      else if (matchesShortcut(e, NAV_SHORTCUTS.NEXT_TAB)) {
+        e.preventDefault()
+        const tabs: RightTab[] = ['results', 'preview', 'astro']
+        const currentIndex = tabs.indexOf(activeTab)
+        const nextIndex = (currentIndex + 1) % tabs.length
+        setActiveTab(tabs[nextIndex])
+        if (isRightPaneCollapsed) {
+          setIsRightPaneCollapsed(false)
+          setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+        }
+      } else if (matchesShortcut(e, NAV_SHORTCUTS.PREV_TAB)) {
+        e.preventDefault()
+        const tabs: RightTab[] = ['results', 'preview', 'astro']
+        const currentIndex = tabs.indexOf(activeTab)
+        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length
+        setActiveTab(tabs[prevIndex])
+        if (isRightPaneCollapsed) {
+          setIsRightPaneCollapsed(false)
+          setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isRightPaneCollapsed, activeTab])
 
   // リサイズ処理
   const handleMouseDown = useCallback(() => {
@@ -922,8 +1004,12 @@ export default function App() {
                     ? 'border-b-2 border-purple-600 text-purple-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
+                title={`AI結果 (${formatShortcut(TAB_SHORTCUTS.RESULTS)})`}
               >
                 AI結果
+                <span className="text-[10px] text-gray-400 font-normal ml-1">
+                  {formatShortcut(TAB_SHORTCUTS.RESULTS)}
+                </span>
                 {aiResults.length > 0 && (
                   <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
                     {aiResults.length}
@@ -932,29 +1018,40 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveTab('preview')}
-                className={`px-4 py-3 text-sm font-medium ${
+                className={`px-4 py-3 text-sm font-medium flex items-center gap-1 ${
                   activeTab === 'preview'
                     ? 'border-b-2 border-blue-600 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
+                title={`プレビュー (${formatShortcut(TAB_SHORTCUTS.PREVIEW)})`}
               >
                 プレビュー
+                <span className="text-[10px] text-gray-400 font-normal ml-1">
+                  {formatShortcut(TAB_SHORTCUTS.PREVIEW)}
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab('astro')}
-                className={`px-4 py-3 text-sm font-medium ${
+                className={`px-4 py-3 text-sm font-medium flex items-center gap-1 ${
                   activeTab === 'astro'
                     ? 'border-b-2 border-blue-600 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
+                title={`Astro (${formatShortcut(TAB_SHORTCUTS.ASTRO)})`}
               >
                 Astro
+                <span className="text-[10px] text-gray-400 font-normal ml-1">
+                  {formatShortcut(TAB_SHORTCUTS.ASTRO)}
+                </span>
               </button>
               <div className="flex-1" />
+              <span className="text-[10px] text-gray-400 mr-2">
+                {formatShortcut(NAV_SHORTCUTS.NEXT_TAB)} 次へ
+              </span>
               <button
                 onClick={toggleRightPane}
                 className="px-3 py-2 text-gray-400 hover:text-gray-600"
-                title="パネルを折りたたむ"
+                title={`パネルを折りたたむ (${formatShortcut(PANEL_SHORTCUTS.TOGGLE_RIGHT_PANEL)})`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
