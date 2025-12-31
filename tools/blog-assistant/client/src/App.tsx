@@ -6,7 +6,6 @@ import { AstroPreview } from './components/AstroPreview'
 import { SaveModal } from './components/SaveModal'
 import { CreateArticleModal } from './components/CreateArticleModal'
 import { ArticleList } from './components/ArticleList'
-import { SkillExecutor } from './components/SkillExecutor'
 import { SkillEditor } from './components/SkillEditor'
 import { AIResultsPanel, type AIResult } from './components/AIResultsPanel'
 import { useAIReview } from './hooks/useAIReview'
@@ -50,7 +49,8 @@ export default function App() {
   const [isFrontmatterCollapsed, setIsFrontmatterCollapsed] = useState(false)
 
   // スキル実行状態
-  const [executingSkill, setExecutingSkill] = useState<Skill | null>(null)
+  const [executingSkillInfo, setExecutingSkillInfo] = useState<{ skill: Skill; selection: string } | null>(null)
+  const [skillStreamingText, setSkillStreamingText] = useState('')
   const [editorSelection, setEditorSelection] = useState('')
 
   // AI結果
@@ -66,7 +66,7 @@ export default function App() {
 
   const { review, streamingText: reviewText, isLoading: isReviewing } = useAIReview()
   const { generate, streamingText: generateText, isLoading: isGenerating } = useAIGenerate()
-  const { skills, loadSkills, createSkill, updateSkill, deleteSkill } = useSkills()
+  const { skills, loadSkills, createSkill, updateSkill, deleteSkill, executeSkill, isExecuting: isExecutingSkill } = useSkills()
 
   // スキル編集状態
   const [editingSkillData, setEditingSkillData] = useState<{ skill: Skill | null; isNew: boolean } | null>(null)
@@ -176,6 +176,7 @@ export default function App() {
 
   // 下書き生成
   const handleGenerateDraft = useCallback(() => {
+    setActiveTab('results')
     setShowTopicInput(true)
     setIsRightPaneCollapsed(false)
     setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
@@ -478,7 +479,7 @@ export default function App() {
   }, [])
 
   // スキル実行（エディタから）
-  const handleExecuteSkill = useCallback((skill: Skill, selection: string) => {
+  const handleExecuteSkill = useCallback(async (skill: Skill, selection: string) => {
     // 特殊なメタスキルは専用ハンドラを使用
     if (skill.id === 'generate-description') {
       handleGenerateDescription()
@@ -488,39 +489,92 @@ export default function App() {
       handleSuggestTags()
       return
     }
-    setEditorSelection(selection)
-    setExecutingSkill(skill)
-  }, [handleGenerateDescription, handleSuggestTags])
 
-  // スキル結果を適用
-  const handleApplySkillResult = useCallback((result: string) => {
-    // 結果をAI結果リストに追加
-    setAiResults((prev) => [
-      {
-        id: `skill-${Date.now()}`,
-        type: 'skill',
-        title: executingSkill?.name || 'スキル',
-        content: result,
-        timestamp: new Date(),
-        canApply: true,
-      },
-      ...prev,
-    ])
+    // 下書き生成スキルはトピック入力が必要
+    if (skill.id === 'generate-draft') {
+      setShowTopicInput(true)
+      setIsRightPaneCollapsed(false)
+      setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+      return
+    }
+
+    // AI結果タブを表示
     setActiveTab('results')
-  }, [executingSkill])
+    setIsRightPaneCollapsed(false)
+    setLeftPanelWidth(PANEL_CONFIG.DEFAULT_LEFT_WIDTH)
+    setEditorSelection(selection)
+    setExecutingSkillInfo({ skill, selection })
+    setSkillStreamingText('')
+
+    const today = new Date().toISOString().split('T')[0]
+    const variables: Record<string, string> = {
+      content,
+      title: frontmatter.title,
+      description: frontmatter.description,
+      tags: frontmatter.tags.join(', '),
+      selection,
+      topic: '',
+      today,
+    }
+
+    try {
+      let fullText = ''
+      await executeSkill(skill.id, variables, (text) => {
+        fullText += text
+        setSkillStreamingText(fullText)
+      })
+
+      // 完了後、結果をAI結果リストに追加
+      setAiResults((prev) => [
+        {
+          id: `skill-${Date.now()}`,
+          type: 'skill',
+          title: skill.name,
+          content: fullText,
+          timestamp: new Date(),
+          canApply: true,
+        },
+        ...prev,
+      ])
+    } catch (err) {
+      setAiResults((prev) => [
+        {
+          id: `skill-error-${Date.now()}`,
+          type: 'skill',
+          title: `${skill.name} エラー`,
+          content: err instanceof Error ? err.message : 'スキルの実行に失敗しました',
+          timestamp: new Date(),
+          canApply: false,
+        },
+        ...prev,
+      ])
+    } finally {
+      setExecutingSkillInfo(null)
+      setSkillStreamingText('')
+    }
+  }, [handleGenerateDescription, handleSuggestTags, content, frontmatter, executeSkill])
+
 
   // 現在ストリーミング中のコンテンツ
-  const streamingContent = isReviewing ? reviewText : isGenerating ? generateText : undefined
+  const streamingContent = isReviewing
+    ? reviewText
+    : isGenerating
+      ? generateText
+      : isExecutingSkill
+        ? skillStreamingText
+        : undefined
   const loadingTitle = isReviewing
     ? '校閲中...'
     : isGenerating
       ? '下書き生成中...'
-      : isGeneratingDescription
-        ? '説明を生成中...'
-        : isSuggestingTags
-          ? 'タグを提案中...'
-          : undefined
-  const isAnyAILoading = isReviewing || isGenerating || isGeneratingDescription || isSuggestingTags
+      : isExecutingSkill
+        ? `${executingSkillInfo?.skill.name || 'スキル'}を実行中...`
+        : isGeneratingDescription
+          ? '説明を生成中...'
+          : isSuggestingTags
+            ? 'タグを提案中...'
+            : undefined
+  const isAnyAILoading = isReviewing || isGenerating || isGeneratingDescription || isSuggestingTags || isExecutingSkill
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -619,56 +673,6 @@ export default function App() {
         onConfirm={handleConfirmCreate}
         onCancel={handleCancelCreate}
       />
-
-      {/* Topic Input Modal */}
-      {showTopicInput && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-bold mb-4">下書きのトピックを入力</h3>
-            <input
-              type="text"
-              value={generateTopic}
-              onChange={(e) => setGenerateTopic(e.target.value)}
-              placeholder="例: React Hooksの使い方"
-              className="w-full px-3 py-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleConfirmGenerate()
-                if (e.key === 'Escape') setShowTopicInput(false)
-              }}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowTopicInput(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleConfirmGenerate}
-                disabled={!generateTopic.trim()}
-                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-              >
-                生成
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Skill Executor Modal */}
-      {executingSkill && (
-        <SkillExecutor
-          skill={executingSkill}
-          content={content}
-          title={frontmatter.title}
-          description={frontmatter.description}
-          tags={frontmatter.tags}
-          selection={editorSelection}
-          onClose={() => setExecutingSkill(null)}
-          onApplyResult={handleApplySkillResult}
-        />
-      )}
 
       {/* Skill Editor Modal */}
       {editingSkillData && (
@@ -961,6 +965,13 @@ export default function App() {
                   streamingContent={streamingContent}
                   onApply={handleApplyResult}
                   onClear={handleClearResults}
+                  topicInput={{ isOpen: showTopicInput, topic: generateTopic }}
+                  onTopicChange={setGenerateTopic}
+                  onTopicSubmit={handleConfirmGenerate}
+                  onTopicCancel={() => {
+                    setShowTopicInput(false)
+                    setGenerateTopic('')
+                  }}
                 />
               )}
               {activeTab === 'astro' && (
