@@ -176,6 +176,15 @@ export function EditorCommandMenu({
     setSelectedIndex(0)
   }, [filter])
 
+  // 選択項目が変更されたときにスクロールして表示
+  useEffect(() => {
+    if (!isOpen || !menuRef.current) return
+    const selectedElement = menuRef.current.querySelector(`[data-index="${selectedIndex}"]`)
+    if (selectedElement) {
+      selectedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [isOpen, selectedIndex])
+
   // 外部クリックで閉じる
   useEffect(() => {
     if (!isOpen) return
@@ -210,6 +219,7 @@ export function EditorCommandMenu({
             return (
               <button
                 key={cmd.id}
+                data-index={currentIndex}
                 onClick={() => {
                   cmd.action()
                   onClose()

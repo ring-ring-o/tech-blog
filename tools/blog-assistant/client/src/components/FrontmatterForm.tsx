@@ -90,12 +90,22 @@ export function FrontmatterForm({ value, onChange, onGenerateDescription, onSugg
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const tagListRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
 
   // スラッシュコマンドの状態
   const [showDescriptionCommand, setShowDescriptionCommand] = useState(false)
   const [showTagCommand, setShowTagCommand] = useState(false)
+
+  // ハイライトされたタグが変更されたときにスクロールして表示
+  useEffect(() => {
+    if (!isDropdownOpen || !tagListRef.current || highlightedIndex < 0) return
+    const highlightedElement = tagListRef.current.querySelector(`[data-tag-index="${highlightedIndex}"]`)
+    if (highlightedElement) {
+      highlightedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [isDropdownOpen, highlightedIndex])
 
   useEffect(() => {
     fetch('/api/articles/tags')
@@ -353,7 +363,10 @@ export function FrontmatterForm({ value, onChange, onGenerateDescription, onSugg
 
           {/* Dropdown */}
           {isDropdownOpen && value.tags.length < CONTENT_LIMITS.MAX_TAGS && (
-            <div className="absolute z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div
+              ref={tagListRef}
+              className="absolute z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto"
+            >
               {filteredTags.length > 0 ? (
                 <>
                   <div className="px-3 py-1.5 text-xs text-gray-500 bg-gray-50 border-b">
@@ -363,6 +376,7 @@ export function FrontmatterForm({ value, onChange, onGenerateDescription, onSugg
                     <button
                       key={tag}
                       type="button"
+                      data-tag-index={index}
                       onClick={() => handleAddTag(tag)}
                       className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 ${
                         index === highlightedIndex ? 'bg-blue-100' : ''
